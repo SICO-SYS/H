@@ -21,10 +21,6 @@ var (
 	err       error
 )
 
-func GetRedisValue(v interface{}) (bool, error) {
-	return redis.Bool(v, err)
-}
-
 func init() {
 	// defer func() {
 	// 	log.Println(recover())

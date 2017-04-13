@@ -14,7 +14,6 @@ import (
 	"net/http"
 	// "time"
 
-	"github.com/SiCo-DevOps/H/connection"
 	. "github.com/SiCo-DevOps/H/log"
 )
 
@@ -73,7 +72,7 @@ func AuthOpenToken(req *http.Request) bool {
 	rsconn := RedisPool.Get()
 	defer rsconn.Close()
 	data, _ := rsconn.Do("GET", key)
-	ok, _ := connection.GetRedisValue(data)
+	ok, _ := GetRedisValue(data)
 	return ok
 }
 
