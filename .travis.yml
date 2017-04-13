@@ -3,6 +3,8 @@ language: go
 go:
   - 1.8.x
 
+go_import_path: github.com/SiCo-DevOps
+
 before_install:
   - cp config.sample.json config.json
 
