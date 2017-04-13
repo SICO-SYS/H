@@ -44,6 +44,6 @@ func WriteLog(level string, msg string) {
 		log.Panicln(filename + " :Open log file Failed")
 	}
 
-	logger := log.New(fd, "[SiCo]", log.Llongfile)
+	logger := log.New(fd, "[SiCo]", log.Lshortfile)
 	logger.Println(msg)
 }
