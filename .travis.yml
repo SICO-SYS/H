@@ -7,7 +7,10 @@ before_install:
   - cp config.sample.json config.json
 
 install: 
-  - go get github.com/garyburd/redigo
+  - go get github.com/garyburd/redigo/redis
+  - go get gopkg.in/mgo.v2
+  - go get github.com/go-sql-driver/mysql
+  - go get github.com/jinzhu/gorm
   - go get github.com/gorilla/mux
   - go get github.com/streadway/amqp
   - go get google.golang.org/grpc
