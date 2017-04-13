@@ -9,9 +9,10 @@ Email:    sinerwr@gmail.com
 package log
 
 import (
-	"H/cfg"
 	"log"
 	"os"
+
+	"github.com/SiCo-DevOps/H/cfg"
 )
 
 var (

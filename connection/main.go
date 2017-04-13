@@ -9,9 +9,10 @@ Email:    sinerwr@gmail.com
 package connection
 
 import (
-	"H/cfg"
-	"H/log"
 	"github.com/garyburd/redigo/redis"
+
+	"github.com/SiCo-DevOps/H/cfg"
+	"github.com/SiCo-DevOps/H/log"
 )
 
 var (

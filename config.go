@@ -9,7 +9,7 @@ Email:    sinerwr@gmail.com
 package main
 
 import (
-	"H/cfg"
+	"github.com/SiCo-DevOps/H/cfg"
 )
 
 var (

@@ -1,7 +1,7 @@
 package route
 
 import (
-	"H/controller"
+	"github.com/SiCo-DevOps/H/controller"
 )
 
 func OpenAPI() {

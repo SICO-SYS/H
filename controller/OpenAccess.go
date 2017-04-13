@@ -9,11 +9,12 @@ Email:    sinerwr@gmail.com
 package controller
 
 import (
-	"H/connection"
 	"encoding/json"
 	// "math"
 	"net/http"
 	// "time"
+
+	"github.com/SiCo-DevOps/H/connection"
 )
 
 var ()

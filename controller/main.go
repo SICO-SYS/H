@@ -9,8 +9,8 @@ Email:    sinerwr@gmail.com
 package controller
 
 import (
-	"H/cfg"
-	"H/connection"
+	"github.com/SiCo-DevOps/H/cfg"
+	"github.com/SiCo-DevOps/H/connection"
 )
 
 var (
