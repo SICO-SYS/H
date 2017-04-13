@@ -15,6 +15,7 @@ import (
 	// "time"
 
 	"github.com/SiCo-DevOps/H/connection"
+	. "github.com/SiCo-DevOps/H/log"
 )
 
 var ()
@@ -40,6 +41,7 @@ func GetOpenToken(rw http.ResponseWriter, req *http.Request) {
 	rspdata := &ResponseData{}
 	if err != nil {
 		rspdata = &ResponseData{126, "sys err"}
+		WriteLog("error", "Cannot Set key")
 	} else {
 		rspdata = &ResponseData{0, &OpenToken{key}}
 	}

@@ -51,7 +51,11 @@ func RedisSetShort(k string, v interface{}, t int16) error {
 	defer conn.Close()
 	conn.Do("SET", k, v)
 	conn.Do("EXPIRE", k, t)
-	return nil
+	if err != nil {
+		return err
+	} else {
+		return nil
+	}
 }
 
 func RedisSetLong(k string, v interface{}) error {
