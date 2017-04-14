@@ -10,13 +10,12 @@ package controller
 
 import (
 	"github.com/SiCo-DevOps/H/cfg"
-	"github.com/SiCo-DevOps/H/connection"
 )
 
 var (
-	RedisPool = connection.RedisPool
-	config    = cfg.Config
-	err       error
+	config  = cfg.Config
+	errcode int8
+	err     error
 )
 
 type ResponseData struct {
@@ -29,38 +28,31 @@ func ResponseMessage(c int8) string {
 	switch c {
 	case 0:
 		msg = "[Success] Processed"
+	// 1 - 10 Receive an incorrect request
 	case 1:
-		msg = "[Failed] Authentication Failed"
+		msg = "[Failed] AAA Failed"
 	case 2:
-		msg = "[Failed] Authorization Failed"
+		msg = "[Failed] Request Params Incorrect"
 	case 3:
-		msg = "[Failed] Missing Params"
+		msg = "[Failed] Request Timeout"
 	case 4:
-		msg = "[Failed] Params Format Incorrect"
+		msg = "[Failed] Request Forbidden"
+	// 100 - 120 System Error
+	case 100:
+		msg = "[Error] Do not hack the system"
+	// 120 - 127 Middleware Error
+	case 125:
+		msg = "[Error] MQ crash"
+	case 126:
+		msg = "[Error] DB crash"
 	case 127:
-		msg = "[Error] Seems Hack"
+		msg = "[Error] RPC crash"
 	default:
-		msg = "[Error] Unknown"
+		msg = "[Error] Unknown problem"
 	}
 	return msg
 }
 
-func RedisSetShort(k string, v interface{}, t int16) error {
-	conn := RedisPool.Get()
-	err = conn.Close()
-	defer conn.Close()
-	conn.Do("SET", k, v)
-	conn.Do("EXPIRE", k, t)
-	if err != nil {
-		return err
-	} else {
-		return nil
-	}
-}
-
-func RedisSetLong(k string, v interface{}) error {
-	conn := RedisPool.Get()
-	defer conn.Close()
-	conn.Do("SET", k, v)
-	return nil
+func ResponseErrmsg(c int8) *ResponseData {
+	return &ResponseData{c, ResponseMessage(c)}
 }

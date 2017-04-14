@@ -16,15 +16,11 @@ import (
 )
 
 var (
-	RedisPool *redis.Pool
-	config    = cfg.Config
-	err       error
+	config = cfg.Config
+	err    error
 )
 
 func init() {
-	// defer func() {
-	// 	log.Println(recover())
-	// }()
 	RedisPool = &redis.Pool{
 		MaxIdle:   80,
 		MaxActive: 12000, // max number of connections
@@ -35,5 +31,12 @@ func init() {
 			}
 			return c, err
 		},
+	}
+
+	err = RedisPool.Get().Close()
+	if err != nil {
+		WriteLog("error", "Cannot Open redis connection")
+	} else {
+		WriteLog("info", "Success connect redis")
 	}
 }

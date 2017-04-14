@@ -10,7 +10,6 @@ package controller
 
 import (
 	"fmt"
-	"github.com/garyburd/redigo/redis"
 	"net/http"
 	"os"
 )
@@ -31,8 +30,4 @@ func GenerateRand() string {
 
 func Sha256Encrypt(v interface{}) string {
 	return "hello"
-}
-
-func GetRedisValue(v interface{}) (bool, error) {
-	return redis.Bool(v, err)
 }
