@@ -14,4 +14,6 @@ install:
   - go get github.com/gorilla/mux
   - go get github.com/streadway/amqp
   - go get google.golang.org/grpc
-
+  - go get github.com/SiCo-DevOps/cfg
+  - go get github.com/SiCo-DevOps/log
+  - go get github.com/SiCo-DevOps/dao
