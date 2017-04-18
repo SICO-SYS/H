@@ -14,6 +14,7 @@ import (
 	"net/http"
 	// "time"
 
+	"github.com/SiCo-DevOps/dao"
 	. "github.com/SiCo-DevOps/log"
 )
 
@@ -34,14 +35,14 @@ type TransMessage struct {
 
 func GetOpenToken(rw http.ResponseWriter, req *http.Request) {
 	key := GenerateRand()
-	err = RedisSetShort(key, config.OpenAccess.TokenValid, config.OpenAccess.TokenExpired)
+	err = dao.RedisSetShort(key, config.OpenAccess.TokenValid, config.OpenAccess.TokenExpired)
 	rspdata := &ResponseData{}
 	if err != nil {
 		rspdata = ResponseErrmsg(126)
-		WriteLog("error", "Cannot Set key")
+		LogProduce("error", "Cannot Set key")
 	} else {
 		rspdata = &ResponseData{0, &OpenToken{key}}
-		WriteLog("info", "Sucess")
+		LogProduce("info", "Sucess")
 	}
 	rsp, _ := json.Marshal(rspdata)
 	rw.Header().Add("Content-Type", "application/json")
@@ -67,21 +68,19 @@ func GetAPIToken(rw http.ResponseWriter, req *http.Request) {
 
 func AuthOpenToken(req *http.Request) bool {
 	k := req.URL.Query().Get("token")
-	data, err1, err2 := RedisGetValue(k)
+	data, err1, err2 := dao.RedisGetValue(k)
 	if err1 != nil {
-		WriteLog("error", "AuthOpenToken: connection error")
-		// WriteLog("error", err1.Error())
+		LogProduce("error", "AuthOpenToken: connection error")
 		return false
 	}
 	if err2 != nil {
-		WriteLog("error", "AuthOpenToken: Cannot Exec GET，I cannot procedure this error, maybe a large value")
-		// WriteLog("error", err2.Error())
+		LogProduce("error", "AuthOpenToken: Cannot Exec GET，I cannot procedure this error, maybe a large value")
 		return false
 	}
-	ok, err := RedisBool(data)
+	ok, err := dao.RedisBool(data)
 	if err != nil {
-		WriteLog("error", "AuthOpenToken: Key parse error")
-		// WriteLog("error", err.Error())
+		LogProduce("error", "AuthOpenToken: Key parse error")
+		// LogProduce("error", err.Error())
 		return false
 	}
 	return ok
