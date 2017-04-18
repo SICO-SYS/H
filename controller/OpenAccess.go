@@ -14,7 +14,7 @@ import (
 	"net/http"
 	// "time"
 
-	. "github.com/SiCo-DevOps/H/log"
+	. "github.com/SiCo-DevOps/log"
 )
 
 type OpenToken struct {

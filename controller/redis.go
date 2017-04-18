@@ -11,11 +11,11 @@ package controller
 import (
 	"github.com/garyburd/redigo/redis"
 
-	"github.com/SiCo-DevOps/H/connection"
+	"github.com/SiCo-DevOps/dao"
 )
 
 var (
-	RedisPool = connection.RedisPool
+	RedisPool = dao.RedisPool
 )
 
 func RedisSetShort(k string, v interface{}, t int16) error {
