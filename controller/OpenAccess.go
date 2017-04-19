@@ -10,10 +10,12 @@ package controller
 
 import (
 	"encoding/json"
-	// "math"
+	"golang.org/x/net/context"
 	"net/http"
 	// "time"
+	// "math"
 
+	"github.com/SiCo-DevOps/Pb"
 	"github.com/SiCo-DevOps/dao"
 	. "github.com/SiCo-DevOps/log"
 )
@@ -51,12 +53,21 @@ func GetOpenToken(rw http.ResponseWriter, req *http.Request) {
 
 func GetAPIToken(rw http.ResponseWriter, req *http.Request) {
 	if AuthOpenToken(req) {
-		key := GenerateRand()
-		secret := GenerateRand()
-		// rsconn := RedisPool.Get()
-		// defer rsconn.Close()
-		// rsconn.Do("SET", key, secret)
-		rsp, _ := json.Marshal(&SecretToken{Key: key, Secret: secret})
+		// key := GenerateRand()
+		// secret := GenerateRand()
+		defer func() {
+			if rcv := recover(); rcv != nil {
+				LogProduce("error", "gRPC connect error")
+			}
+		}()
+		cc := dao.RpcConn("He")
+		defer cc.Close()
+		c := pb.NewOpenClient(cc)
+		r, err := c.RegUser(context.Background(), &pb.OpenRequest{"reg"})
+		if err != nil {
+			LogErrMsg(50, "controller.GetAPIToken")
+		}
+		rsp, _ := json.Marshal(&SecretToken{Key: r.Key, Secret: r.Secret})
 		rw.Header().Add("Content-Type", "application/json")
 		rw.Write(rsp)
 	} else {
@@ -70,17 +81,16 @@ func AuthOpenToken(req *http.Request) bool {
 	k := req.URL.Query().Get("token")
 	data, err1, err2 := dao.RedisGetValue(k)
 	if err1 != nil {
-		LogProduce("error", "AuthOpenToken: connection error")
+		LogErrMsg(1, "controller.AuthOpenToken")
 		return false
 	}
 	if err2 != nil {
-		LogProduce("error", "AuthOpenToken: Cannot Exec GET，I cannot procedure this error, maybe a large value")
+		LogErrMsg(19, "controller.AuthOpenToken")
 		return false
 	}
 	ok, err := dao.RedisBool(data)
 	if err != nil {
-		LogProduce("error", "AuthOpenToken: Key parse error")
-		// LogProduce("error", err.Error())
+		LogErrMsg(11, "controller.AuthOpenToken")
 		return false
 	}
 	return ok
