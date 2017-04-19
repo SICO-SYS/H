@@ -17,3 +17,4 @@ install:
   - go get github.com/SiCo-DevOps/cfg
   - go get github.com/SiCo-DevOps/log
   - go get github.com/SiCo-DevOps/dao
+  - go get github.com/SiCo-DevOps/Pb
