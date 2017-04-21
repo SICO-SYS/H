@@ -9,9 +9,12 @@ RUN apk del git
 WORKDIR $GOPATH/src/github.com/SiCo-DevOps/H
 
 RUN go-wrapper install
+
+WORKDIR $GOPATH/bin/
+
 RUN rm -rf $GOPATH/src
 
-ADD config.sample.json $GOPAH/bin/config.json
+ADD config.sample.json $GOPATH/bin/config.json
 
 EXPOSE 2048
 
