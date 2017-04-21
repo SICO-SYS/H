@@ -9,6 +9,8 @@ Email:    sinerwr@gmail.com
 package controller
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
 	"net/http"
 	"os"
@@ -28,8 +30,10 @@ func GenerateRand() string {
 	return v
 }
 
-func Sha256Encrypt(v interface{}) string {
-	return "hello"
+func Sha256Encrypt(v string) string {
+	hash := sha256.New()
+	hash.Write([]byte(v))
+	return hex.EncodeToString(hash.Sum(nil))
 }
 
 type ResponseData struct {

@@ -1,3 +1,11 @@
+/*
+
+LICENSE:  MIT
+Author:   sine
+Email:    sinerwr@gmail.com
+
+*/
+
 package route
 
 import (
@@ -5,7 +13,8 @@ import (
 )
 
 func OpenAPI() {
-	Handler.HandleFunc("/open/config", controller.GetCfgVersion).Methods("GET")
-	Handler.HandleFunc("/open/Token", controller.GetOpenToken).Methods("GET")
-	Handler.HandleFunc("/open/APIToken", controller.GetAPIToken).Methods("GET")
+	r := Handler.PathPrefix("/open").Subrouter()
+	r.NewRoute().Path("/config").HandlerFunc(controller.GetCfgVersion).Methods("GET")
+	r.NewRoute().Path("/Token").HandlerFunc(controller.GetOpenToken).Methods("GET")
+	r.NewRoute().Path("/APIToken").HandlerFunc(controller.GetAPIToken).Methods("GET")
 }

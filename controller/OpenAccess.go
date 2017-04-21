@@ -29,12 +29,6 @@ type SecretToken struct {
 	Secret string `json:"secret"`
 }
 
-type TransMessage struct {
-	Key    string `json:"key"`
-	Token  string `json:"token"`
-	Action string `json:"action"`
-}
-
 func GetOpenToken(rw http.ResponseWriter, req *http.Request) {
 	key := GenerateRand()
 	err = dao.RedisSetShort(key, config.OpenAccess.TokenValid, config.OpenAccess.TokenExpired)
@@ -62,8 +56,8 @@ func GetAPIToken(rw http.ResponseWriter, req *http.Request) {
 		}()
 		cc := dao.RpcConn("He")
 		defer cc.Close()
-		c := pb.NewOpenClient(cc)
-		r, err := c.RegUser(context.Background(), &pb.OpenRequest{"reg"})
+		c := pb.NewAAA_OpenClient(cc)
+		r, err := c.AAA_RegUser(context.Background(), &pb.AAA_OpenRequest{"reg"})
 		if err != nil {
 			LogErrMsg(50, "controller.GetAPIToken")
 		}
