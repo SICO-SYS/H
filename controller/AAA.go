@@ -33,6 +33,7 @@ type ThirdKeypair struct {
 
 func AAA(k string, s string) bool {
 	defer func() {
+		recover()
 		if rcv := recover(); rcv != nil {
 			LogProduce("error", "gRPC connect error")
 		}

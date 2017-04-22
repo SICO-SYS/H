@@ -12,7 +12,6 @@ import (
 	"net/http"
 
 	"github.com/SiCo-DevOps/H/route"
-	"github.com/SiCo-DevOps/dao"
 )
 
 func Run() {
@@ -20,6 +19,5 @@ func Run() {
 }
 
 func main() {
-	defer func() { recover(); dao.MgoUserConn.Close() }()
 	Run()
 }

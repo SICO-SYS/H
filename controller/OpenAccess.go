@@ -10,10 +10,9 @@ package controller
 
 import (
 	"encoding/json"
+	"fmt"
 	"golang.org/x/net/context"
 	"net/http"
-	// "time"
-	// "math"
 
 	"github.com/SiCo-DevOps/Pb"
 	"github.com/SiCo-DevOps/dao"
@@ -46,22 +45,30 @@ func GetOpenToken(rw http.ResponseWriter, req *http.Request) {
 }
 
 func GetAPIToken(rw http.ResponseWriter, req *http.Request) {
+	defer func() {
+		recover()
+		LogProduce("error", "gRPC connect error")
+	}()
 	if AuthOpenToken(req) {
-		// key := GenerateRand()
-		// secret := GenerateRand()
-		defer func() {
-			if rcv := recover(); rcv != nil {
-				LogProduce("error", "gRPC connect error")
-			}
-		}()
+		fmt.Println("1")
 		cc := dao.RpcConn("He")
+		fmt.Println("1")
 		defer cc.Close()
+		fmt.Println("1")
 		c := pb.NewAAA_OpenClient(cc)
+		fmt.Println("1")
 		r, err := c.AAA_RegUser(context.Background(), &pb.AAA_OpenRequest{"reg"})
+		fmt.Println("1")
 		if err != nil {
 			LogErrMsg(50, "controller.GetAPIToken")
 		}
-		rsp, _ := json.Marshal(&SecretToken{Key: r.Key, Secret: r.Secret})
+		if r != nil {
+			rsp, _ := json.Marshal(&SecretToken{Key: r.Key, Secret: r.Secret})
+			rw.Header().Add("Content-Type", "application/json")
+			rw.Write(rsp)
+			return
+		}
+		rsp, _ := json.Marshal(&SecretToken{Key: "", Secret: ""})
 		rw.Header().Add("Content-Type", "application/json")
 		rw.Write(rsp)
 	} else {
