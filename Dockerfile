@@ -18,4 +18,6 @@ ADD config.sample.json $GOPATH/bin/config.json
 
 EXPOSE 2048
 
+VOLUME $GOPATH/bin/config.json
+
 CMD H
