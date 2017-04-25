@@ -11,7 +11,6 @@ package controller
 import (
 	"encoding/json"
 	"golang.org/x/net/context"
-	"io/ioutil"
 	"net/http"
 
 	"github.com/SiCo-DevOps/Pb"
@@ -20,15 +19,16 @@ import (
 )
 
 type AuthToken struct {
-	Key   string `json:"key"`
-	Token string `json:"token"`
+	Id        string `json:"id"`
+	Signature string `json:"signature"`
 }
 
 type ThirdKeypair struct {
 	Auth    AuthToken `json:"auth"`
 	APItype string    `json:"apitype"`
+	Name    string    `json:"name"`
 	ID      string    `json:"id"`
-	Token   string    `json:"token"`
+	Key     string    `json:"key"`
 }
 
 func AAA(k string, s string) bool {
@@ -38,12 +38,12 @@ func AAA(k string, s string) bool {
 			LogProduce("error", "gRPC connect error")
 		}
 	}()
-	cc := dao.RpcConn("He")
+	cc := dao.RpcConn(RpcAddr["He"])
 	defer cc.Close()
 	c := pb.NewAAA_SecretClient(cc)
 	in := &pb.AAA_APIToken{}
-	in.Key = Sha256Encrypt(k)
-	in.Token = s
+	in.Id = k
+	in.Signature = s
 	r, err := c.AAA_Auth(context.Background(), in)
 	if err != nil {
 		LogErrMsg(50, "controller.AAA")
@@ -57,33 +57,39 @@ func AAA(k string, s string) bool {
 }
 
 func PostThirdKeypair(rw http.ResponseWriter, req *http.Request) {
-	header := req.Header.Get("Content-Type")
-	body, _ := ioutil.ReadAll(req.Body)
-	req.Body.Close()
-	data := &ThirdKeypair{}
-	json.Unmarshal(body, data)
-	if header != "application/json" {
-		rsp := &ResponseData{1, "request must follow application/json"}
-		rspdata, _ := json.Marshal(rsp)
-		rw.Write(rspdata)
-		return
-	}
 	defer func() {
 		recover()
 		if rcv := recover(); rcv != nil {
 			LogProduce("error", "gRPC connect error")
 		}
 	}()
-	cc := dao.RpcConn("He")
+	data, ok := AuthPostData(req)
+	v := &ThirdKeypair{}
+	if ok {
+		json.Unmarshal(data, v)
+	} else {
+		rsp := &ResponseData{2, "request must follow application/json"}
+		rspdata, _ := json.Marshal(rsp)
+		rw.Write(rspdata)
+		return
+	}
+	if v.Name == "" || v.APItype == "" || v.ID == "" || v.Key == "" {
+		rsp := &ResponseData{2, "Missing params, pls follow the guide"}
+		rspdata, _ := json.Marshal(rsp)
+		rw.Write(rspdata)
+		return
+	}
+	cc := dao.RpcConn(RpcAddr["He"])
 	defer cc.Close()
 	c := pb.NewAAA_SecretClient(cc)
 	in := &pb.AAA_ThirdpartyKey{}
 	in.Apitoken = &pb.AAA_APIToken{}
-	in.Apitoken.Key = Sha256Encrypt(data.Auth.Key)
-	in.Apitoken.Token = data.Auth.Token
-	in.Apitype = data.APItype
-	in.Id = data.ID
-	in.Key = data.Token
+	in.Apitoken.Id = v.Auth.Id
+	in.Apitoken.Signature = v.Auth.Signature
+	in.Apitype = v.APItype
+	in.Name = v.Name
+	in.Id = v.ID
+	in.Key = v.Key
 	r, err := c.AAA_ThirdKeypair(context.Background(), in)
 	if err != nil {
 		LogErrMsg(50, "controller.PostThirdKeypair")
@@ -103,19 +109,19 @@ func PostThirdKeypair(rw http.ResponseWriter, req *http.Request) {
 }
 
 func AAA_Auth(rw http.ResponseWriter, req *http.Request) {
-	header := req.Header.Get("Content-Type")
-	body, _ := ioutil.ReadAll(req.Body)
-	req.Body.Close()
-	keypair := &AuthToken{}
-	json.Unmarshal(body, keypair)
-	if header != "application/json" {
-		rsp := &ResponseData{1, "request must follow application/json"}
+	data, ok := AuthPostData(req)
+	v := &AuthToken{}
+	if ok {
+		json.Unmarshal(data, v)
+
+	} else {
+		rsp := &ResponseData{2, "request must follow application/json"}
 		rspdata, _ := json.Marshal(rsp)
 		rw.Header().Add("Content-Type", "application/json")
 		rw.Write(rspdata)
 		return
 	}
-	if AAA(keypair.Key, keypair.Token) {
+	if AAA(v.Id, v.Signature) {
 		rsp := &ResponseData{0, "Success"}
 		rspdata, _ := json.Marshal(rsp)
 		rw.Header().Add("Content-Type", "application/json")

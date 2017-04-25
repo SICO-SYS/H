@@ -16,5 +16,5 @@ func OpenAPI() {
 	r := Handler.PathPrefix("/open").Subrouter()
 	r.NewRoute().Path("/config").HandlerFunc(controller.GetCfgVersion).Methods("GET")
 	r.NewRoute().Path("/Token").HandlerFunc(controller.GetOpenToken).Methods("GET")
-	r.NewRoute().Path("/APIToken").HandlerFunc(controller.GetAPIToken).Methods("GET")
+	r.NewRoute().Path("/APIToken").HandlerFunc(controller.RegAPIToken).Methods("POST")
 }
