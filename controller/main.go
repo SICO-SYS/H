@@ -16,16 +16,17 @@ import (
 )
 
 var (
-	config  = cfg.Config
+	needAAA bool = true
+	config       = cfg.Config
 	errcode int8
 	err     error
 	RpcAddr = map[string]string{
-		"He": "He.SiCo",
-		"Li": "Li.SiCo",
-		"Be": "Be.SiCo",
-		"B":  "B.SiCo",
-		"C":  "C.SiCo",
-		"N":  "N.SiCo",
+		"He": "He.SiCo" + config.Rpc.He,
+		"Li": "Li.SiCo" + config.Rpc.Li,
+		"Be": "Be.SiCo" + config.Rpc.Be,
+		"B":  "B.SiCo" + config.Rpc.B,
+		"C":  "C.SiCo" + config.Rpc.C,
+		"N":  "N.SiCo" + config.Rpc.N,
 	}
 )
 

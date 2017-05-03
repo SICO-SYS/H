@@ -9,12 +9,22 @@ Email:    sinerwr@gmail.com
 package controller
 
 import (
+	"github.com/gorilla/mux"
 	"net/http"
 )
 
 func GetCfgVersion(rw http.ResponseWriter, req *http.Request) {
 	// rw.Header().Add("content-type", "application/json")
 	rw.Write([]byte("[Success] config version  === " + config.Version))
+}
+
+func GetRouteName(req *http.Request, name string) string {
+	return mux.Vars(req)[name]
+}
+
+func httprsp(rw http.ResponseWriter, rsp []byte) {
+	rw.Header().Add("Content-Type", "application/json")
+	rw.Write(rsp)
 }
 
 type ResponseData struct {

@@ -56,7 +56,7 @@ func AAA(k string, s string) bool {
 	return false
 }
 
-func PostThirdKeypair(rw http.ResponseWriter, req *http.Request) {
+func AAA_PostThirdKeypair(rw http.ResponseWriter, req *http.Request) {
 	defer func() {
 		recover()
 		if rcv := recover(); rcv != nil {
@@ -68,15 +68,13 @@ func PostThirdKeypair(rw http.ResponseWriter, req *http.Request) {
 	if ok {
 		json.Unmarshal(data, v)
 	} else {
-		rsp := &ResponseData{2, "request must follow application/json"}
-		rspdata, _ := json.Marshal(rsp)
-		rw.Write(rspdata)
+		rsp, _ := json.Marshal(&ResponseData{2, "request must follow application/json"})
+		httprsp(rw, rsp)
 		return
 	}
-	if v.Name == "" || v.APItype == "" || v.ID == "" || v.Key == "" {
-		rsp := &ResponseData{2, "Missing params, pls follow the guide"}
-		rspdata, _ := json.Marshal(rsp)
-		rw.Write(rspdata)
+	if v.Name == "" || v.APItype == "" || v.ID == "" {
+		rsp, _ := json.Marshal(&ResponseData{2, "Missing params, pls follow the guide"})
+		httprsp(rw, rsp)
 		return
 	}
 	cc := dao.RpcConn(RpcAddr["He"])
@@ -96,16 +94,12 @@ func PostThirdKeypair(rw http.ResponseWriter, req *http.Request) {
 	}
 
 	if r.Code == 0 {
-		rsp := &ResponseData{0, "Success"}
-		rspdata, _ := json.Marshal(rsp)
-		rw.Header().Add("Content-Type", "application/json")
-		rw.Write(rspdata)
+		rsp, _ := json.Marshal(&ResponseData{0, "Success"})
+		httprsp(rw, rsp)
 		return
 	}
-	rsp := &ResponseData{2, r.Msg}
-	rspdata, _ := json.Marshal(rsp)
-	rw.Header().Add("Content-Type", "application/json")
-	rw.Write(rspdata)
+	rsp, _ := json.Marshal(&ResponseData{2, r.Msg})
+	httprsp(rw, rsp)
 }
 
 func AAA_Auth(rw http.ResponseWriter, req *http.Request) {
@@ -115,22 +109,32 @@ func AAA_Auth(rw http.ResponseWriter, req *http.Request) {
 		json.Unmarshal(data, v)
 
 	} else {
-		rsp := &ResponseData{2, "request must follow application/json"}
-		rspdata, _ := json.Marshal(rsp)
-		rw.Header().Add("Content-Type", "application/json")
-		rw.Write(rspdata)
+		rsp, _ := json.Marshal(&ResponseData{2, "request must follow application/json"})
+		httprsp(rw, rsp)
 		return
 	}
 	if AAA(v.Id, v.Signature) {
-		rsp := &ResponseData{0, "Success"}
-		rspdata, _ := json.Marshal(rsp)
-		rw.Header().Add("Content-Type", "application/json")
-		rw.Write(rspdata)
+		rsp, _ := json.Marshal(&ResponseData{0, "Success"})
+		httprsp(rw, rsp)
 		return
 	}
-	rsp := &ResponseData{2, "AAA_AuthFailed"}
-	rspdata, _ := json.Marshal(rsp)
-	rw.Header().Add("Content-Type", "application/json")
-	rw.Write(rspdata)
+	rsp, _ := json.Marshal(&ResponseData{2, "AAA_AuthFailed"})
+	httprsp(rw, rsp)
+}
 
+func AAA_GetThirdKey(cloud string, id string, signature string, alias string) (string, string) {
+	in := &pb.AAA_ThirdpartyKey{}
+	in.Apitoken = &pb.AAA_APIToken{}
+	in.Apitoken.Id = id
+	in.Apitoken.Signature = signature
+	in.Apitype = cloud
+	in.Name = alias
+	cc := dao.RpcConn(RpcAddr["He"])
+	defer cc.Close()
+	c := pb.NewAAA_SecretClient(cc)
+	res, _ := c.AAA_GetThirdKey(context.Background(), in)
+	if res != nil {
+		return res.Id, res.Key
+	}
+	return "", ""
 }

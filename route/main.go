@@ -18,8 +18,8 @@ var (
 
 func init() {
 	Handler = mux.NewRouter()
-	Handler.PathPrefix("/happy")
 	Handler.StrictSlash(true)
 	OpenAPI()
 	AAA()
+	Cloud()
 }

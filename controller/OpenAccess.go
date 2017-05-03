@@ -24,9 +24,8 @@ type OpenToken struct {
 }
 
 type SecretToken struct {
-	Id     string `json:"id"`
-	Key    string `json:"key"`
-	Random string `json:"random"`
+	Id  string `json:"id"`
+	Key string `json:"key"`
 }
 
 type RegUser struct {
@@ -46,8 +45,7 @@ func GetOpenToken(rw http.ResponseWriter, req *http.Request) {
 		rspdata = &ResponseData{0, &OpenToken{Token: key}}
 	}
 	rsp, _ := json.Marshal(rspdata)
-	rw.Header().Add("Content-Type", "application/json")
-	rw.Write(rsp)
+	httprsp(rw, rsp)
 }
 
 func RegAPIToken(rw http.ResponseWriter, req *http.Request) {
@@ -61,33 +59,29 @@ func RegAPIToken(rw http.ResponseWriter, req *http.Request) {
 		json.Unmarshal(data, v)
 	} else {
 		rsp, _ := json.Marshal(&ResponseData{2, "request must follow application/json"})
-		rw.Header().Add("Content-Type", "application/json")
-		rw.Write(rsp)
+		httprsp(rw, rsp)
 		return
 	}
 	if AuthOpenToken(v.Token) {
-		if v.Random == "" || v.Email == "" {
+		if v.Email == "" {
 			rsp, _ := json.Marshal(&ResponseData{Code: 2, Data: "Must need random & email"})
-			rw.Header().Add("Content-Type", "application/json")
-			rw.Write(rsp)
+			httprsp(rw, rsp)
 			return
 		}
 		cc := dao.RpcConn(RpcAddr["He"])
 		defer cc.Close()
 		c := pb.NewAAA_OpenClient(cc)
-		r, err := c.AAA_RegUser(context.Background(), &pb.AAA_RegRequest{Random: v.Random, Email: v.Email})
+		r, err := c.AAA_RegUser(context.Background(), &pb.AAA_RegRequest{Email: v.Email})
 		if err != nil {
 			LogErrMsg(50, "controller.RegAPIToken")
 		}
 		if r != nil {
-			rsp, _ := json.Marshal(&SecretToken{Id: r.Id, Key: r.Key, Random: v.Random})
-			rw.Header().Add("Content-Type", "application/json")
-			rw.Write(rsp)
+			rsp, _ := json.Marshal(&SecretToken{Id: r.Id, Key: r.Key})
+			httprsp(rw, rsp)
 			return
 		}
-		rsp, _ := json.Marshal(&SecretToken{"", "", v.Random})
-		rw.Header().Add("Content-Type", "application/json")
-		rw.Write(rsp)
+		rsp, _ := json.Marshal(&SecretToken{"", ""})
+		httprsp(rw, rsp)
 	} else {
 		rw.WriteHeader(http.StatusUnauthorized)
 		rw.Write([]byte("Permission Denied"))
