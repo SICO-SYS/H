@@ -1,5 +1,5 @@
 {
   "aws": ["ec2","edb"],
   "aliyun": ["ecs"],
-  "qcloud": ["cvm","cdb","trade"]
+  "qcloud": ["cvm","cdb","trade","redis","image"]
 }

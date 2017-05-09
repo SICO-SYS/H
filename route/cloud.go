@@ -14,6 +14,7 @@ import (
 
 func Cloud() {
 	v1 := Handler.PathPrefix("/v1/cloud").Subrouter()
-	v1.HandleFunc("/{cloud}/{bsns}/sync", controller.Cloud_SyncResourse).Methods("GET")
-	v1.HandleFunc("/{cloud}/{bsns}", controller.Cloud_Call).Methods("POST")
+	v1.HandleFunc("/{cloud}/{bsns}/op/{action}", controller.Cloud_call).Methods("GET")
+	v1.HandleFunc("/{cloud}/{bsns}/template", controller.Cloud_template).Methods("GET")
+	v1.HandleFunc("/{cloud}/{bsns}", controller.Cloud_rawCall).Methods("POST")
 }

@@ -70,44 +70,57 @@ func Cloud_CommonCall(in *pb.CloudRequest, cloud string) (*pb.CloudResponse, boo
 	return nil, false
 }
 
-func Cloud_SyncResourse(rw http.ResponseWriter, req *http.Request) {
+func Cloud_call(rw http.ResponseWriter, req *http.Request) {
 	cloud := GetRouteName(req, "cloud")
 	bsns := GetRouteName(req, "bsns")
-	cloud_region := req.URL.Query().Get("region")
-	id := req.URL.Query().Get("id")
-	signature := req.URL.Query().Get("signature")
-	alias := req.URL.Query().Get("name")
+	cloud_action = GetRouteName(req, "action")
 	if !AuthBsns(cloud, bsns) {
 		rsp, _ := json.Marshal(&ResponseData{Code: 2, Data: "Cloud not support yet ,damn"})
 		httprsp(rw, rsp)
 		return
 	}
 
+	data, ok := AuthPostData(req)
+	if !ok {
+		rsp, _ := json.Marshal(&ResponseData{2, "request must follow application/json"})
+		httprsp(rw, rsp)
+		return
+	}
+	v := &Cloud_Req{}
+	json.Unmarshal(data, v)
+
 	/*
 		Control need AAA server to get Cloud id & key
 	*/
 	if needAAA {
-		cloud_id, cloud_key = AAA_GetThirdKey(cloud, id, signature, alias)
+		cloud_id, cloud_key = AAA_GetThirdKey(cloud, v.Auth.Id, v.Auth.Signature, v.Name)
+		if cloud_id == "" {
+			rsp, _ := json.Marshal(&ResponseData{2, "AAA failed"})
+			httprsp(rw, rsp)
+			return
+		}
 	} else {
-		cloud_id = req.URL.Query().Get("id")
-		cloud_key = req.URL.Query().Get("key")
+		cloud_id = v.Auth.Id
+		cloud_key = v.Auth.Signature
 	}
 
-	cc := dao.RpcConn(RpcAddr["Li"])
-	defer cc.Close()
-	c := pb.NewCloud_APIClient(cc)
-	in := &pb.CloudRequest{Bsns: bsns, Action: "listall", Region: cloud_region, CloudId: cloud_id, CloudKey: cloud_key}
-	res, _ := c.Qcloud(context.Background(), in)
+	in := &pb.CloudRequest{Bsns: bsns, Action: cloud_action, Region: v.Region, CloudId: cloud_id, CloudKey: cloud_key}
+	in.Params = []*pb.CloudParams{}
+	for param_key, param_value := range v.Param {
+		in.Params = append(in.Params, &pb.CloudParams{Key: param_key, Value: param_value})
+	}
+	res, ok := Cloud_CommonCall(in, "qcloud")
 	if res.Code == 0 {
-		rsp, _ := json.Marshal(&ResponseData{Code: 0, Data: res.Msg})
+		// rsp, _ := json.Marshal(&Cloud_Res{Code: 0, Data: string(res.Data)})
+		rsp := res.Data
 		httprsp(rw, rsp)
 		return
 	}
-	rsp, _ := json.Marshal(&ResponseData{Code: 2, Data: res.Msg})
+	rsp, _ := json.Marshal(&Cloud_Res{Code: 2, Msg: res.Msg})
 	httprsp(rw, rsp)
 }
 
-func Cloud_Call(rw http.ResponseWriter, req *http.Request) {
+func Cloud_rawCall(rw http.ResponseWriter, req *http.Request) {
 	cloud := GetRouteName(req, "cloud")
 	bsns := GetRouteName(req, "bsns")
 	if !AuthBsns(cloud, bsns) {
@@ -154,4 +167,8 @@ func Cloud_Call(rw http.ResponseWriter, req *http.Request) {
 	}
 	rsp, _ := json.Marshal(&Cloud_Res{Code: 2, Msg: res.Msg})
 	httprsp(rw, rsp)
+}
+
+func Cloud_template(rw http.ResponseWriter, req *http.Request) {
+
 }
