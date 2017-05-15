@@ -22,4 +22,5 @@ func init() {
 	OpenAPI()
 	AAA()
 	Cloud()
+	Asset()
 }

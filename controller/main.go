@@ -9,6 +9,7 @@ Email:    sinerwr@gmail.com
 package controller
 
 import (
+	"encoding/json"
 	"io/ioutil"
 	"net/http"
 
@@ -30,9 +31,11 @@ var (
 	}
 )
 
-func AuthPostData(req *http.Request) ([]byte, bool) {
+func AuthPostData(rw http.ResponseWriter, req *http.Request) ([]byte, bool) {
 	header := req.Header.Get("Content-Type")
 	if header != "application/json" {
+		rsp, _ := json.Marshal(&ResponseData{2, "request must follow application/json"})
+		httprsp(rw, rsp)
 		return nil, false
 	}
 	body, _ := ioutil.ReadAll(req.Body)

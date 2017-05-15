@@ -80,10 +80,8 @@ func Cloud_call(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	data, ok := AuthPostData(req)
+	data, ok := AuthPostData(rw, req)
 	if !ok {
-		rsp, _ := json.Marshal(&ResponseData{2, "request must follow application/json"})
-		httprsp(rw, rsp)
 		return
 	}
 	v := &Cloud_Req{}
@@ -129,10 +127,8 @@ func Cloud_rawCall(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	data, ok := AuthPostData(req)
+	data, ok := AuthPostData(rw, req)
 	if !ok {
-		rsp, _ := json.Marshal(&ResponseData{2, "request must follow application/json"})
-		httprsp(rw, rsp)
 		return
 	}
 	v := &Cloud_Req{}

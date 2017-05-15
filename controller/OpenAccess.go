@@ -53,13 +53,11 @@ func RegAPIToken(rw http.ResponseWriter, req *http.Request) {
 		recover()
 		LogErrMsg(5, "controller.RegAPIToken")
 	}()
-	data, ok := AuthPostData(req)
+	data, ok := AuthPostData(rw, req)
 	v := &RegUser{}
 	if ok {
 		json.Unmarshal(data, v)
 	} else {
-		rsp, _ := json.Marshal(&ResponseData{2, "request must follow application/json"})
-		httprsp(rw, rsp)
 		return
 	}
 	if AuthOpenToken(v.Token) {

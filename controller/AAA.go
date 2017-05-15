@@ -63,13 +63,11 @@ func AAA_PostThirdKeypair(rw http.ResponseWriter, req *http.Request) {
 			LogProduce("error", "gRPC connect error")
 		}
 	}()
-	data, ok := AuthPostData(req)
+	data, ok := AuthPostData(rw, req)
 	v := &ThirdKeypair{}
 	if ok {
 		json.Unmarshal(data, v)
 	} else {
-		rsp, _ := json.Marshal(&ResponseData{2, "request must follow application/json"})
-		httprsp(rw, rsp)
 		return
 	}
 	if v.Name == "" || v.APItype == "" || v.ID == "" {
@@ -103,14 +101,11 @@ func AAA_PostThirdKeypair(rw http.ResponseWriter, req *http.Request) {
 }
 
 func AAA_Auth(rw http.ResponseWriter, req *http.Request) {
-	data, ok := AuthPostData(req)
+	data, ok := AuthPostData(rw, req)
 	v := &AuthToken{}
 	if ok {
 		json.Unmarshal(data, v)
-
 	} else {
-		rsp, _ := json.Marshal(&ResponseData{2, "request must follow application/json"})
-		httprsp(rw, rsp)
 		return
 	}
 	if AAA(v.Id, v.Signature) {
