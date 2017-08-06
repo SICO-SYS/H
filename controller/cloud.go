@@ -14,9 +14,8 @@ import (
 	"io/ioutil"
 	"net/http"
 
-	"github.com/SiCo-DevOps/Pb"
-	"github.com/SiCo-DevOps/dao"
-	. "github.com/SiCo-DevOps/log"
+	"github.com/SiCo-Ops/Pb"
+	"github.com/SiCo-Ops/dao"
 )
 
 var (
@@ -70,54 +69,6 @@ func Cloud_CommonCall(in *pb.CloudRequest, cloud string) (*pb.CloudResponse, boo
 	return nil, false
 }
 
-func Cloud_call(rw http.ResponseWriter, req *http.Request) {
-	cloud := GetRouteName(req, "cloud")
-	bsns := GetRouteName(req, "bsns")
-	cloud_action = GetRouteName(req, "action")
-	if !AuthBsns(cloud, bsns) {
-		rsp, _ := json.Marshal(&ResponseData{Code: 2, Data: "Cloud not support yet ,damn"})
-		httprsp(rw, rsp)
-		return
-	}
-
-	data, ok := AuthPostData(rw, req)
-	if !ok {
-		return
-	}
-	v := &Cloud_Req{}
-	json.Unmarshal(data, v)
-
-	/*
-		Control need AAA server to get Cloud id & key
-	*/
-	if needAAA {
-		cloud_id, cloud_key = AAA_GetThirdKey(cloud, v.Auth.Id, v.Auth.Signature, v.Name)
-		if cloud_id == "" {
-			rsp, _ := json.Marshal(&ResponseData{2, "AAA failed"})
-			httprsp(rw, rsp)
-			return
-		}
-	} else {
-		cloud_id = v.Auth.Id
-		cloud_key = v.Auth.Signature
-	}
-
-	in := &pb.CloudRequest{Bsns: bsns, Action: cloud_action, Region: v.Region, CloudId: cloud_id, CloudKey: cloud_key}
-	in.Params = []*pb.CloudParams{}
-	for param_key, param_value := range v.Param {
-		in.Params = append(in.Params, &pb.CloudParams{Key: param_key, Value: param_value})
-	}
-	res, ok := Cloud_CommonCall(in, "qcloud")
-	if res.Code == 0 {
-		// rsp, _ := json.Marshal(&Cloud_Res{Code: 0, Data: string(res.Data)})
-		rsp := res.Data
-		httprsp(rw, rsp)
-		return
-	}
-	rsp, _ := json.Marshal(&Cloud_Res{Code: 2, Msg: res.Msg})
-	httprsp(rw, rsp)
-}
-
 func Cloud_rawCall(rw http.ResponseWriter, req *http.Request) {
 	cloud := GetRouteName(req, "cloud")
 	bsns := GetRouteName(req, "bsns")
@@ -150,10 +101,7 @@ func Cloud_rawCall(rw http.ResponseWriter, req *http.Request) {
 	}
 
 	in := &pb.CloudRequest{Bsns: bsns, Action: v.Action, Region: v.Region, CloudId: cloud_id, CloudKey: cloud_key}
-	in.Params = []*pb.CloudParams{}
-	for param_key, param_value := range v.Param {
-		in.Params = append(in.Params, &pb.CloudParams{Key: param_key, Value: param_value})
-	}
+	in.Params = v.Param
 	res, ok := Cloud_CommonCall(in, "qcloud")
 	if res.Code == 0 {
 		// rsp, _ := json.Marshal(&Cloud_Res{Code: 0, Data: string(res.Data)})
@@ -163,8 +111,4 @@ func Cloud_rawCall(rw http.ResponseWriter, req *http.Request) {
 	}
 	rsp, _ := json.Marshal(&Cloud_Res{Code: 2, Msg: res.Msg})
 	httprsp(rw, rsp)
-}
-
-func Cloud_template(rw http.ResponseWriter, req *http.Request) {
-
 }

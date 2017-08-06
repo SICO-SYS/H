@@ -10,19 +10,19 @@ package controller
 
 import (
 	"encoding/json"
+	"github.com/getsentry/raven-go"
 	"io/ioutil"
 	"net/http"
 
-	"github.com/SiCo-DevOps/cfg"
+	"github.com/SiCo-Ops/cfg"
 )
 
 var (
-	needAAA bool = true
-	config       = cfg.Config
+	config  = cfg.Config
 	errcode int8
 	err     error
-	RpcAddr = map[string]string{
-		"He": "He.SiCo" + config.Rpc.He,
+	RPCAddr = map[string]string{
+		"He": "He.SiCo" + config.RPC.He,
 		"Li": "Li.SiCo" + config.Rpc.Li,
 		"Be": "Be.SiCo" + config.Rpc.Be,
 		"B":  "B.SiCo" + config.Rpc.B,
@@ -41,4 +41,10 @@ func AuthPostData(rw http.ResponseWriter, req *http.Request) ([]byte, bool) {
 	body, _ := ioutil.ReadAll(req.Body)
 	req.Body.Close()
 	return body, true
+}
+
+func init() {
+	if config.Sentry.Enable {
+		raven.SetDSN(config.Sentry.URL)
+	}
 }

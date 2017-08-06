@@ -10,13 +10,13 @@ package controller
 
 import (
 	"encoding/json"
+	"github.com/getsentry/raven-go"
 	"golang.org/x/net/context"
 	"net/http"
 
-	"github.com/SiCo-DevOps/Pb"
-	"github.com/SiCo-DevOps/dao"
-	. "github.com/SiCo-DevOps/log"
-	"github.com/SiCo-DevOps/public"
+	"github.com/SiCo-Ops/Pb"
+	"github.com/SiCo-Ops/dao"
+	"github.com/SiCo-Ops/public"
 )
 
 type OpenToken struct {
@@ -39,8 +39,8 @@ func GetOpenToken(rw http.ResponseWriter, req *http.Request) {
 	err = dao.RedisSetShort(key, config.OpenAccess.TokenValid, config.OpenAccess.TokenExpired)
 	rspdata := &ResponseData{}
 	if err != nil {
+		raven.CaptureError(err, nil)
 		rspdata = ResponseErrmsg(126)
-		LogErrMsg(10, "controller.GetOpenToken")
 	} else {
 		rspdata = &ResponseData{0, &OpenToken{Token: key}}
 	}

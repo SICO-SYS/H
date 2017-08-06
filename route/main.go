@@ -13,12 +13,12 @@ import (
 )
 
 var (
-	Handler *mux.Router
+	HTTPHandler *mux.Router // Define HTTPHandler for http handler
 )
 
 func init() {
-	Handler = mux.NewRouter()
-	Handler.StrictSlash(true)
+	HTTPHandler = mux.NewRouter()
+	HTTPHandler.StrictSlash(true)
 	OpenAPI()
 	AAA()
 	Cloud()

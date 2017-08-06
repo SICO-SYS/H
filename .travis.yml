@@ -4,7 +4,7 @@ go:
 before_install:
 - cp config.sample.json config.json
 install:
-  - go get github.com/SiCo-DevOps/H
+  - go get github.com/SiCo-Ops/H
 # - go get github.com/garyburd/redigo/redis
 # - go get gopkg.in/mgo.v2
 # - go get github.com/go-sql-driver/mysql
@@ -12,11 +12,11 @@ install:
 # - go get github.com/gorilla/mux
 # - go get github.com/streadway/amqp
 # - go get google.golang.org/grpc
-# - go get github.com/SiCo-DevOps/cfg
-# - go get github.com/SiCo-DevOps/log
-# - go get github.com/SiCo-DevOps/dao
-# - go get github.com/SiCo-DevOps/Pb
-# - go get github.com/SiCo-DevOps/public
+# - go get github.com/SiCo-Ops/cfg
+# - go get github.com/SiCo-Ops/log
+# - go get github.com/SiCo-Ops/dao
+# - go get github.com/SiCo-Ops/Pb
+# - go get github.com/SiCo-Ops/public
 notifications:
   slack:
     secure: uqXBByydXQM9yFlC29qLuw+evyNYNuc/doswhCAmB+shP7XMZAlAr4l63crcy7HUKwGATfDZ0nc6NcOSZ0Y3oA5FKDE3T2jYAnYQYpINsU8Msrqcd436UJhBLQoR5TsfGlcQPszUui3c+zWsYvKIgLw2gZLFf0dk3n5V9Br4RvJl+oYLlhH3iQbmgMnbEIlAZo1224lzyawutLJZH0PYGeYbG5H9yTH7YlXVkOHm2i5EnyP71opcWzsnqBhWx4dL7Ufi0MUDx/rh2pOL5DKyXN3ljbZDx03KYa1XmMeWHMpvT7iWejdQUgkvndJQ5W2ufmsehVi3sVJn6ajWlHiKl8b+ueRqrL4uMU0xTdDEz68ie2jxhKGMm/P6bPcPAjcMC/5QMcqfotYunXxN83c9nJ6h3etgTGUYZbt9Y0FwMNF2c5426yZ44+u1oC7B5mFWzCnfk7EgTFOiMMbtG8RDxha6/qLgqpGQlAIY+An4sUe/oIpiNThdl1t2GLxapBrTw8hZhneH/EQIvdfqK/8gy8l68fbvTXJb/7zRDvBO1+O/FbzqIeN4gp6DmPULV4zCS0asojaRDDd/15TPyjnRWgvLTOvBOV2UzvctKP3RK+fHSWSSPDevr6QZhHQOzbzZAomSk73seJsE+B6XiMCs7fY4YGlrqGRsxNjfAS2g69U=

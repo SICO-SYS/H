@@ -13,9 +13,8 @@ import (
 	"golang.org/x/net/context"
 	"net/http"
 
-	"github.com/SiCo-DevOps/Pb"
-	"github.com/SiCo-DevOps/dao"
-	. "github.com/SiCo-DevOps/log"
+	"github.com/SiCo-Ops/Pb"
+	"github.com/SiCo-Ops/dao"
 )
 
 type AuthToken struct {
@@ -23,9 +22,9 @@ type AuthToken struct {
 	Signature string `json:"signature"`
 }
 
-type ThirdKeypair struct {
+type ThirdpartyKeypair struct {
 	Auth    AuthToken `json:"auth"`
-	APItype string    `json:"apitype"`
+	APIType string    `json:"apitype"`
 	Name    string    `json:"name"`
 	ID      string    `json:"id"`
 	Key     string    `json:"key"`
@@ -46,7 +45,6 @@ func AAA(k string, s string) bool {
 	in.Signature = s
 	r, err := c.AAA_Auth(context.Background(), in)
 	if err != nil {
-		LogErrMsg(50, "controller.AAA")
 		return false
 	}
 
@@ -56,7 +54,7 @@ func AAA(k string, s string) bool {
 	return false
 }
 
-func AAA_PostThirdKeypair(rw http.ResponseWriter, req *http.Request) {
+func AAARegisThirdpartyKeypair(rw http.ResponseWriter, req *http.Request) {
 	defer func() {
 		recover()
 		if rcv := recover(); rcv != nil {

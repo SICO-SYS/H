@@ -11,7 +11,7 @@ package main
 import (
 	"net/http"
 
-	"github.com/SiCo-DevOps/H/route"
+	"github.com/SiCo-Ops/H/route"
 )
 
 func Run() {
