@@ -14,7 +14,10 @@ import (
 
 func Asset() {
 	v1 := HTTPHandler.PathPrefix("/v1/asset").Subrouter()
-	v1.Path("/template").HandlerFunc(controller.Asset_addTemplate).Methods("POST")
-	v1.Path("/sync/{cloud}/{bsns}").HandlerFunc(controller.Asset_synchronize).Methods("POST")
-	v1.Path("/instance/{cloud}/{bsns}").HandlerFunc(controller.Asset_addTemplate)
+	v1.Path("/{cloud}/{bsns}").HandlerFunc(controller.GetCfgVersion).Methods("POST")
+}
+
+func Template() {
+	v1 := HTTPHandler.PathPrefix("/v1/template").Subrouter()
+	v1.Path("/").HandlerFunc(controller.GetCfgVersion).Methods("POST")
 }

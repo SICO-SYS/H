@@ -9,17 +9,30 @@ Email:    sinerwr@gmail.com
 package controller
 
 import (
+	"encoding/json"
 	"github.com/gorilla/mux"
+	"io/ioutil"
 	"net/http"
 )
 
 func GetCfgVersion(rw http.ResponseWriter, req *http.Request) {
-	// rw.Header().Add("content-type", "application/json")
 	rw.Write([]byte("[Success] config version  === " + config.Version))
 }
 
 func GetRouteName(req *http.Request, name string) string {
 	return mux.Vars(req)[name]
+}
+
+func ValidatePostData(rw http.ResponseWriter, req *http.Request) ([]byte, bool) {
+	header := req.Header.Get("Content-Type")
+	if header != "application/json" {
+		rsp, _ := json.Marshal(&ResponseData{2, "request must follow application/json"})
+		httprsp(rw, rsp)
+		return nil, false
+	}
+	body, _ := ioutil.ReadAll(req.Body)
+	req.Body.Close()
+	return body, true
 }
 
 func httprsp(rw http.ResponseWriter, rsp []byte) {

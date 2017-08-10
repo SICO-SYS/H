@@ -15,7 +15,7 @@ import (
 )
 
 func Run() {
-	http.ListenAndServe("0.0.0.0:2048", route.Handler)
+	http.ListenAndServe("0.0.0.0:2048", route.HTTPHandler)
 }
 
 func main() {

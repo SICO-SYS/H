@@ -10,103 +10,100 @@ package controller
 
 import (
 	"encoding/json"
+	"github.com/getsentry/raven-go"
 	"golang.org/x/net/context"
 	"net/http"
 
 	"github.com/SiCo-Ops/Pb"
-	"github.com/SiCo-Ops/dao"
+	"github.com/SiCo-Ops/dao/grpc"
 )
 
-type AuthToken struct {
+type AuthenticationToken struct {
 	Id        string `json:"id"`
 	Signature string `json:"signature"`
 }
 
-type ThirdpartyKeypair struct {
-	Auth    AuthToken `json:"auth"`
-	APIType string    `json:"apitype"`
-	Name    string    `json:"name"`
-	ID      string    `json:"id"`
-	Key     string    `json:"key"`
+type ThirdToken struct {
+	Auth    AuthenticationToken `json:"auth"`
+	APIType string              `json:"apitype"`
+	Name    string              `json:"name"`
+	ID      string              `json:"id"`
+	Key     string              `json:"key"`
 }
 
-func AAA(k string, s string) bool {
+func AAAValidateUser(id string, signature string) bool {
 	defer func() {
 		recover()
 		if rcv := recover(); rcv != nil {
-			LogProduce("error", "gRPC connect error")
+			raven.CaptureMessage("Maybe gRPC connect error", nil)
 		}
 	}()
-	cc := dao.RpcConn(RpcAddr["He"])
+	cc := rpc.RPCConn(RPCAddr["He"])
 	defer cc.Close()
-	c := pb.NewAAA_SecretClient(cc)
-	in := &pb.AAA_APIToken{}
-	in.Id = k
-	in.Signature = s
-	r, err := c.AAA_Auth(context.Background(), in)
+	c := pb.NewAAAPrivateServiceClient(cc)
+	in := &pb.AAATokenCall{}
+	in.Id = id
+	in.Signature = signature
+	r, err := c.AuthenticationRPC(context.Background(), in)
 	if err != nil {
 		return false
 	}
-
-	if r.Code == 0 {
-		return true
-	}
-	return false
+	return r.Valid
 }
 
-func AAARegisThirdpartyKeypair(rw http.ResponseWriter, req *http.Request) {
-	defer func() {
-		recover()
-		if rcv := recover(); rcv != nil {
-			LogProduce("error", "gRPC connect error")
-		}
-	}()
-	data, ok := AuthPostData(rw, req)
-	v := &ThirdKeypair{}
+// func CloudTokenRegistry(rw http.ResponseWriter, req *http.Request) {
+// 	defer func() {
+// 		recover()
+// 		if rcv := recover(); rcv != nil {
+// 			raven.CaptureMessage("controller.AAARegisThirdpartyKeypair", nil)
+// 		}
+// 	}()
+// 	data, ok := ValidatePostData(rw, req)
+// 	v := &ThirdKeypair{}
+// 	if ok {
+// 		json.Unmarshal(data, v)
+// 	} else {
+// 		return
+// 	}
+// 	if v.Name == "" || v.APItype == "" || v.ID == "" {
+// 		rsp, _ := json.Marshal(&ResponseData{2, "Missing params, pls follow the guide"})
+// 		httprsp(rw, rsp)
+// 		return
+// 	}
+// 	cc := rpc.RPCConn(RPCAddr["He"])
+// 	defer cc.Close()
+// 	c := pb.NewAAAPrivateServiceClient(cc)
+// 	in := &pb.
+// 	in.Apitoken = &pb.AAA_APIToken{}
+// 	in.Apitoken.Id = v.Auth.Id
+// 	in.Apitoken.Signature = v.Auth.Signature
+// 	in.Apitype = v.APItype
+// 	in.Name = v.Name
+// 	in.Id = v.ID
+// 	in.Key = v.Key
+// 	r, err := c.AAA_ThirdKeypair(context.Background(), in)
+// 	if err != nil {
+// 		LogErrMsg(50, "controller.PostThirdKeypair")
+// 	}
+
+// 	if r.Code == 0 {
+// 		rsp, _ := json.Marshal(&ResponseData{0, "Success"})
+// 		httprsp(rw, rsp)
+// 		return
+// 	}
+// 	rsp, _ := json.Marshal(&ResponseData{2, r.Msg})
+// 	httprsp(rw, rsp)
+// }
+
+func AAAAuthentication(rw http.ResponseWriter, req *http.Request) {
+	data, ok := ValidatePostData(rw, req)
+	v := &AuthenticationToken{}
 	if ok {
 		json.Unmarshal(data, v)
 	} else {
 		return
 	}
-	if v.Name == "" || v.APItype == "" || v.ID == "" {
-		rsp, _ := json.Marshal(&ResponseData{2, "Missing params, pls follow the guide"})
-		httprsp(rw, rsp)
-		return
-	}
-	cc := dao.RpcConn(RpcAddr["He"])
-	defer cc.Close()
-	c := pb.NewAAA_SecretClient(cc)
-	in := &pb.AAA_ThirdpartyKey{}
-	in.Apitoken = &pb.AAA_APIToken{}
-	in.Apitoken.Id = v.Auth.Id
-	in.Apitoken.Signature = v.Auth.Signature
-	in.Apitype = v.APItype
-	in.Name = v.Name
-	in.Id = v.ID
-	in.Key = v.Key
-	r, err := c.AAA_ThirdKeypair(context.Background(), in)
-	if err != nil {
-		LogErrMsg(50, "controller.PostThirdKeypair")
-	}
-
-	if r.Code == 0 {
-		rsp, _ := json.Marshal(&ResponseData{0, "Success"})
-		httprsp(rw, rsp)
-		return
-	}
-	rsp, _ := json.Marshal(&ResponseData{2, r.Msg})
-	httprsp(rw, rsp)
-}
-
-func AAA_Auth(rw http.ResponseWriter, req *http.Request) {
-	data, ok := AuthPostData(rw, req)
-	v := &AuthToken{}
-	if ok {
-		json.Unmarshal(data, v)
-	} else {
-		return
-	}
-	if AAA(v.Id, v.Signature) {
+	if AAAValidateUser(v.Id, v.Signature) {
 		rsp, _ := json.Marshal(&ResponseData{0, "Success"})
 		httprsp(rw, rsp)
 		return
@@ -115,19 +112,19 @@ func AAA_Auth(rw http.ResponseWriter, req *http.Request) {
 	httprsp(rw, rsp)
 }
 
-func AAA_GetThirdKey(cloud string, id string, signature string, alias string) (string, string) {
-	in := &pb.AAA_ThirdpartyKey{}
-	in.Apitoken = &pb.AAA_APIToken{}
-	in.Apitoken.Id = id
-	in.Apitoken.Signature = signature
-	in.Apitype = cloud
-	in.Name = alias
-	cc := dao.RpcConn(RpcAddr["He"])
-	defer cc.Close()
-	c := pb.NewAAA_SecretClient(cc)
-	res, _ := c.AAA_GetThirdKey(context.Background(), in)
-	if res != nil {
-		return res.Id, res.Key
-	}
-	return "", ""
-}
+// func AAA_GetThirdKey(cloud string, id string, signature string, alias string) (string, string) {
+// 	in := &pb.AAA_ThirdpartyKey{}
+// 	in.Apitoken = &pb.AAA_APIToken{}
+// 	in.Apitoken.Id = id
+// 	in.Apitoken.Signature = signature
+// 	in.Apitype = cloud
+// 	in.Name = alias
+// 	cc := dao.RpcConn(RPCAddr["He"])
+// 	defer cc.Close()
+// 	c := pb.NewAAA_SecretClient(cc)
+// 	res, _ := c.AAA_GetThirdKey(context.Background(), in)
+// 	if res != nil {
+// 		return res.Id, res.Key
+// 	}
+// 	return "", ""
+// }

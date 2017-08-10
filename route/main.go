@@ -19,8 +19,9 @@ var (
 func init() {
 	HTTPHandler = mux.NewRouter()
 	HTTPHandler.StrictSlash(true)
-	OpenAPI()
+	Public()
 	AAA()
 	Cloud()
 	Asset()
+	Template()
 }

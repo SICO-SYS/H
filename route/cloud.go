@@ -14,5 +14,6 @@ import (
 
 func Cloud() {
 	v1 := HTTPHandler.PathPrefix("/v1/cloud").Subrouter()
-	v1.HandleFunc("/{cloud}/{bsns}", controller.Cloud_rawCall).Methods("POST")
+	v1.HandleFunc("/{cloud}/{service}", controller.GetCfgVersion).Methods("POST")
+	v1.Path("/token").HandlerFunc(controller.GetCfgVersion).Methods("POST")
 }

@@ -14,7 +14,6 @@ import (
 
 func AAA() {
 	v1 := HTTPHandler.PathPrefix("/v1/AAA").Subrouter()
-	v1.Path("/keypair").HandlerFunc(controller.AAA_PostThirdKeypair).Methods("POST")
-	v1.Path("/").HandlerFunc(controller.AAA_Auth).Methods("POST")
-	v1.Path("/authorization").HandlerFunc(controller.GetCfgVersion).Methods("POST")
+	v1.Path("/authentication").HandlerFunc(controller.AAAAuthentication).Methods("POST")
+	v1.Path("/token").HandlerFunc(controller.GetCfgVersion).Methods("POST")
 }
