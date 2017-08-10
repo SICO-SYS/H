@@ -92,7 +92,7 @@ func AAARegToken(rw http.ResponseWriter, req *http.Request) {
 		defer cc.Close()
 		c := pb.NewAAAPublicServiceClient(cc)
 		r, _ := c.GenerateTokenRPC(context.Background(), &pb.AAAGenerateTokenCall{Email: v.Email, Phone: v.Phone})
-		if r != nil {
+		if r.Id != nil {
 			rsp, _ := json.Marshal(&PrivateToken{ID: r.Id, Key: r.Key})
 			httprsp(rw, rsp)
 			return
