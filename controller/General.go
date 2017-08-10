@@ -48,8 +48,6 @@ type ResponseData struct {
 func ErrorMessage(c int8) string {
 	msg := ""
 	switch c {
-	case 0:
-		msg = "[!!!] Do not hack the system"
 	// 1 - 10 Receive an incorrect request
 	case 1:
 		msg = "[Failed] AAA Failed"
@@ -59,6 +57,8 @@ func ErrorMessage(c int8) string {
 		msg = "[Failed] Request Timeout"
 	case 4:
 		msg = "[Failed] Request Forbidden"
+	case 10:
+		msg = "[Failed] Do not hack the system"
 	// 100 - 120 System Error
 	// 120 - 127 Middleware Error
 	case 125:

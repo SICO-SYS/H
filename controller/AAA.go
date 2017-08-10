@@ -18,20 +18,23 @@ import (
 	"github.com/SiCo-Ops/dao/grpc"
 )
 
+type PrivateToken struct {
+	ID  string `json:"id"`
+	Key string `json:"key"`
+}
+
 type AuthenticationToken struct {
-	Id        string `json:"id"`
+	ID        string `json:"id"`
 	Signature string `json:"signature"`
 }
 
-type ThirdToken struct {
-	Auth    AuthenticationToken `json:"auth"`
-	APIType string              `json:"apitype"`
-	Name    string              `json:"name"`
-	ID      string              `json:"id"`
-	Key     string              `json:"key"`
+type TokenRegInfo struct {
+	Token string `json:"token"`
+	Email string `json:"email"`
+	Phone string `json:"phone"`
 }
 
-func AAAValidateUser(id string, signature string) bool {
+func AAAValidateToken(id string, signature string) bool {
 	defer func() {
 		recover()
 		if rcv := recover(); rcv != nil {
@@ -51,50 +54,6 @@ func AAAValidateUser(id string, signature string) bool {
 	return r.Valid
 }
 
-// func CloudTokenRegistry(rw http.ResponseWriter, req *http.Request) {
-// 	defer func() {
-// 		recover()
-// 		if rcv := recover(); rcv != nil {
-// 			raven.CaptureMessage("controller.AAARegisThirdpartyKeypair", nil)
-// 		}
-// 	}()
-// 	data, ok := ValidatePostData(rw, req)
-// 	v := &ThirdKeypair{}
-// 	if ok {
-// 		json.Unmarshal(data, v)
-// 	} else {
-// 		return
-// 	}
-// 	if v.Name == "" || v.APItype == "" || v.ID == "" {
-// 		rsp, _ := json.Marshal(&ResponseData{2, "Missing params, pls follow the guide"})
-// 		httprsp(rw, rsp)
-// 		return
-// 	}
-// 	cc := rpc.RPCConn(RPCAddr["He"])
-// 	defer cc.Close()
-// 	c := pb.NewAAAPrivateServiceClient(cc)
-// 	in := &pb.
-// 	in.Apitoken = &pb.AAA_APIToken{}
-// 	in.Apitoken.Id = v.Auth.Id
-// 	in.Apitoken.Signature = v.Auth.Signature
-// 	in.Apitype = v.APItype
-// 	in.Name = v.Name
-// 	in.Id = v.ID
-// 	in.Key = v.Key
-// 	r, err := c.AAA_ThirdKeypair(context.Background(), in)
-// 	if err != nil {
-// 		LogErrMsg(50, "controller.PostThirdKeypair")
-// 	}
-
-// 	if r.Code == 0 {
-// 		rsp, _ := json.Marshal(&ResponseData{0, "Success"})
-// 		httprsp(rw, rsp)
-// 		return
-// 	}
-// 	rsp, _ := json.Marshal(&ResponseData{2, r.Msg})
-// 	httprsp(rw, rsp)
-// }
-
 func AAAAuthentication(rw http.ResponseWriter, req *http.Request) {
 	data, ok := ValidatePostData(rw, req)
 	v := &AuthenticationToken{}
@@ -103,7 +62,7 @@ func AAAAuthentication(rw http.ResponseWriter, req *http.Request) {
 	} else {
 		return
 	}
-	if AAAValidateUser(v.Id, v.Signature) {
+	if AAAValidateToken(v.ID, v.Signature) {
 		rsp, _ := json.Marshal(&ResponseData{0, "Success"})
 		httprsp(rw, rsp)
 		return
@@ -112,19 +71,36 @@ func AAAAuthentication(rw http.ResponseWriter, req *http.Request) {
 	httprsp(rw, rsp)
 }
 
-// func AAA_GetThirdKey(cloud string, id string, signature string, alias string) (string, string) {
-// 	in := &pb.AAA_ThirdpartyKey{}
-// 	in.Apitoken = &pb.AAA_APIToken{}
-// 	in.Apitoken.Id = id
-// 	in.Apitoken.Signature = signature
-// 	in.Apitype = cloud
-// 	in.Name = alias
-// 	cc := dao.RpcConn(RPCAddr["He"])
-// 	defer cc.Close()
-// 	c := pb.NewAAA_SecretClient(cc)
-// 	res, _ := c.AAA_GetThirdKey(context.Background(), in)
-// 	if res != nil {
-// 		return res.Id, res.Key
-// 	}
-// 	return "", ""
-// }
+func AAARegToken(rw http.ResponseWriter, req *http.Request) {
+	defer func() {
+		recover()
+	}()
+	data, ok := ValidatePostData(rw, req)
+	v := &TokenRegInfo{}
+	if ok {
+		json.Unmarshal(data, v)
+	} else {
+		return
+	}
+	if ValidateOpenToken(v.Token) {
+		if v.Email == "" {
+			rsp, _ := json.Marshal(&ResponseData{Code: 2, Data: "Must need email"})
+			httprsp(rw, rsp)
+			return
+		}
+		cc := rpc.RPCConn(RPCAddr["He"])
+		defer cc.Close()
+		c := pb.NewAAAPublicServiceClient(cc)
+		r, _ := c.GenerateTokenRPC(context.Background(), &pb.AAAGenerateTokenCall{Email: v.Email, Phone: v.Phone})
+		if r != nil {
+			rsp, _ := json.Marshal(&PrivateToken{ID: r.Id, Key: r.Key})
+			httprsp(rw, rsp)
+			return
+		}
+		rsp, _ := json.Marshal(&PrivateToken{"", ""})
+		httprsp(rw, rsp)
+	} else {
+		rw.WriteHeader(http.StatusUnauthorized)
+		rw.Write([]byte("Permission Denied"))
+	}
+}

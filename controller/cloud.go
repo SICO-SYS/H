@@ -1,22 +1,24 @@
-// /*
+/*
 
-// LICENSE:  MIT
-// Author:   sine
-// Email:    sinerwr@gmail.com
+LICENSE:  MIT
+Author:   sine
+Email:    sinerwr@gmail.com
 
-// */
+*/
 
 package controller
 
-// import (
-// 	"encoding/json"
-// 	"golang.org/x/net/context"
-// 	"io/ioutil"
-// 	"net/http"
+import (
+	"encoding/json"
+	"github.com/getsentry/raven-go"
+	"golang.org/x/net/context"
+	// "io/ioutil"
+	"net/http"
 
-// 	"github.com/SiCo-Ops/Pb"
-// 	"github.com/SiCo-Ops/dao/mongo"
-// )
+	"github.com/SiCo-Ops/Pb"
+	"github.com/SiCo-Ops/dao/grpc"
+	// "github.com/SiCo-Ops/dao/mongo"
+)
 
 // var (
 // 	cloud_id     string
@@ -24,6 +26,14 @@ package controller
 // 	cloud_region string
 // 	cloud_action string
 // )
+
+type ThirdToken struct {
+	PrivateToken AuthenticationToken `json:"token"`
+	Cloud        string              `json:"cloud"`
+	Name         string              `json:"name"`
+	ID           string              `json:"id"`
+	Key          string              `json:"key"`
+}
 
 // type Cloud_Req struct {
 // 	Auth   AuthToken         `json:"auth"`
@@ -37,6 +47,68 @@ package controller
 // 	Code int64  `json:"code"`
 // 	Msg  string `json:"msg"`
 // 	Data string `json:"data"`
+// }
+
+func CloudTokenRegistry(rw http.ResponseWriter, req *http.Request) {
+	defer func() {
+		recover()
+		if rcv := recover(); rcv != nil {
+			raven.CaptureMessage("controller.CloudTokenRegistry", nil)
+		}
+	}()
+	data, ok := ValidatePostData(rw, req)
+	v := &ThirdToken{}
+	if ok {
+		json.Unmarshal(data, v)
+	} else {
+		return
+	}
+	if v.Name == "" || v.Cloud == "" || v.ID == "" {
+		rsp, _ := json.Marshal(ResponseErrmsg(2))
+		httprsp(rw, rsp)
+		return
+	}
+	if !AAAValidateToken(v.PrivateToken.ID, v.PrivateToken.Signature) {
+		rsp, _ := json.Marshal(ResponseErrmsg(1))
+		httprsp(rw, rsp)
+		return
+	}
+	cc := rpc.RPCConn(RPCAddr["Li"])
+	defer cc.Close()
+	c := pb.NewCloudTokenServiceClient(cc)
+	in := &pb.CloudTokenCall{}
+	in.Cloud = v.Cloud
+	in.Name = v.Name
+	in.Id = v.ID
+	in.Key = v.Key
+	r, err := c.TokenSet(context.Background(), in)
+	if err != nil {
+		raven.CaptureError(err, nil)
+	}
+	if r.Id == "" {
+		rsp, _ := json.Marshal(&ResponseData{0, "Success"})
+		httprsp(rw, rsp)
+		return
+	}
+	rsp, _ := json.Marshal(ResponseErrmsg(2))
+	httprsp(rw, rsp)
+}
+
+// func CloudTokenFind(cloud string, id string, signature string, alias string) (string, string) {
+// 	in := &pb.AAA_ThirdpartyKey{}
+// 	in.Apitoken = &pb.AAA_APIToken{}
+// 	in.Apitoken.ID = id
+// 	in.Apitoken.Signature = signature
+// 	in.Apitype = cloud
+// 	in.Name = alias
+// 	cc := dao.RpcConn(RPCAddr["He"])
+// 	defer cc.Close()
+// 	c := pb.NewAAA_SecretClient(cc)
+// 	res, _ := c.AAA_GetThirdKey(context.Background(), in)
+// 	if res != nil {
+// 		return res.ID, res.Key
+// 	}
+// 	return "", ""
 // }
 
 // func AuthBsns(cloud string, bsns string) bool {
@@ -89,18 +161,18 @@ package controller
 // 		Control need AAA server to get Cloud id & key
 // 	*/
 // 	if needAAA {
-// 		cloud_id, cloud_key = AAA_GetThirdKey(cloud, v.Auth.Id, v.Auth.Signature, v.Name)
+// 		cloud_id, cloud_key = AAA_GetThirdKey(cloud, v.Auth.ID, v.Auth.Signature, v.Name)
 // 		if cloud_id == "" {
 // 			rsp, _ := json.Marshal(&ResponseData{2, "AAA failed"})
 // 			httprsp(rw, rsp)
 // 			return
 // 		}
 // 	} else {
-// 		cloud_id = v.Auth.Id
+// 		cloud_id = v.Auth.ID
 // 		cloud_key = v.Auth.Signature
 // 	}
 
-// 	in := &pb.CloudRequest{Bsns: bsns, Action: v.Action, Region: v.Region, CloudId: cloud_id, CloudKey: cloud_key}
+// 	in := &pb.CloudRequest{Bsns: bsns, Action: v.Action, Region: v.Region, CloudID: cloud_id, CloudKey: cloud_key}
 // 	in.Params = v.Param
 // 	res, ok := Cloud_CommonCall(in, "qcloud")
 // 	if res.Code == 0 {
