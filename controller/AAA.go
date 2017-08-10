@@ -67,7 +67,7 @@ func AAAAuthentication(rw http.ResponseWriter, req *http.Request) {
 		httprsp(rw, rsp)
 		return
 	}
-	rsp, _ := json.Marshal(&ResponseData{2, "AAA_AuthFailed"})
+	rsp, _ := json.Marshal(ResponseErrmsg(1))
 	httprsp(rw, rsp)
 }
 
@@ -84,7 +84,7 @@ func AAARegToken(rw http.ResponseWriter, req *http.Request) {
 	}
 	if ValidateOpenToken(v.Token) {
 		if v.Email == "" {
-			rsp, _ := json.Marshal(&ResponseData{Code: 2, Data: "Must need email"})
+			rsp, _ := json.Marshal(ResponseErrmsg(2))
 			httprsp(rw, rsp)
 			return
 		}
@@ -92,7 +92,7 @@ func AAARegToken(rw http.ResponseWriter, req *http.Request) {
 		defer cc.Close()
 		c := pb.NewAAAPublicServiceClient(cc)
 		r, _ := c.GenerateTokenRPC(context.Background(), &pb.AAAGenerateTokenCall{Email: v.Email, Phone: v.Phone})
-		if r.Id != nil {
+		if r.Id != "" {
 			rsp, _ := json.Marshal(&PrivateToken{ID: r.Id, Key: r.Key})
 			httprsp(rw, rsp)
 			return
