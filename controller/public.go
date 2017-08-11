@@ -23,7 +23,7 @@ type PublicToken struct {
 
 func GetPublicToken(rw http.ResponseWriter, req *http.Request) {
 	key := public.GenerateHexString()
-	err := redis.RedisSetWithExpire(redis.PublicPool, key, config.OpenAccess.TokenValid, config.OpenAccess.TokenExpired)
+	err := redis.SetWithExpire(redis.PublicPool, key, config.OpenAccess.TokenValid, config.OpenAccess.TokenExpired)
 	rspdata := &ResponseData{}
 	if err != nil {
 		raven.CaptureError(err, nil)
@@ -36,14 +36,14 @@ func GetPublicToken(rw http.ResponseWriter, req *http.Request) {
 }
 
 func ValidateOpenToken(k string) bool {
-	data, err1, err2 := redis.RedisGetWithKey(redis.PublicPool, k)
+	data, err1, err2 := redis.GetWithKey(redis.PublicPool, k)
 	if err1 != nil {
 		return false
 	}
 	if err2 != nil {
 		return false
 	}
-	ok, err := redis.RedisValueIsBool(data)
+	ok, err := redis.ValueIsBool(data)
 	if err != nil {
 		return false
 	}

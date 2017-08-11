@@ -12,10 +12,10 @@ RUN go-wrapper install
 
 WORKDIR $GOPATH/bin/
 
-RUN rm -rf $GOPATH/src
+RUN ["rm","-rf","$GOPATH/src"]
 
 EXPOSE 2048
 
 VOLUME $GOPATH/bin/config.json
 
-CMD H
+CMD ["H"]
