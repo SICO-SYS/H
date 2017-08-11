@@ -5,8 +5,9 @@ MAINTAINER sine "sinerwr@gmail.com"
 RUN apk --update add git && \
     go-wrapper download github.com/SiCo-Ops/H && \
     apk del git && \
-    cd $GOPATH/src && \
-    go-wrapper install
+    cd $GOPATH/src/github.com/SiCo-Ops/H && \
+    go-wrapper install && \
+    rm -rf $GOPATH/src
 
 EXPOSE 2048
 
