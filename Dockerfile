@@ -2,20 +2,14 @@ FROM golang:alpine
 
 MAINTAINER sine "sinerwr@gmail.com"
 
-RUN apk --update add git
-RUN go-wrapper download github.com/SiCo-Ops/H
-RUN apk del git
-
-WORKDIR $GOPATH/src/github.com/SiCo-Ops/H
-
-RUN go-wrapper install
-
-WORKDIR $GOPATH/bin/
-
-RUN ["rm","-rf","$GOPATH/src"]
+RUN apk --update add git && \
+    go-wrapper download github.com/SiCo-Ops/H && \
+    apk del git && \
+    cd $GOPATH/src && \
+    go-wrapper install
 
 EXPOSE 2048
 
 VOLUME $GOPATH/bin/config.json
 
-CMD ["H"]
+CMD ["$GOPATH/bin/H"]
