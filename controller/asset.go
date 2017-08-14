@@ -45,7 +45,7 @@ func AssetCreateTemplate(rw http.ResponseWriter, req *http.Request) {
 	in.Param = v.Param
 	cc := rpc.RPCConn(RPCAddr["Be"])
 	defer cc.Close()
-	c := pb.NewAssetClient(cc)
+	c := pb.NewAssetServiceClient(cc)
 	res, _ := c.CreateTemplateRPC(context.Background(), in)
 	if res.Code == 0 {
 		rsp, _ := json.Marshal(&ResponseData{0, "Success add template"})
