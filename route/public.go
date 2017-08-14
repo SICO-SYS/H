@@ -14,6 +14,6 @@ import (
 
 func Public() {
 	r := HTTPHandler.PathPrefix("/public").Subrouter()
-	r.Path("/version").HandlerFunc(controller.GetCfgVersion).Methods("GET")
-	r.Path("/token").HandlerFunc(controller.GetPublicToken).Methods("GET")
+	r.Path("/version").HandlerFunc(controller.PublicCfgVersion).Methods("GET")
+	r.Path("/token").HandlerFunc(controller.PublicGenerateToken).Methods("GET")
 }

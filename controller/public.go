@@ -21,7 +21,7 @@ type PublicToken struct {
 	Token string `json:"token"`
 }
 
-func GetPublicToken(rw http.ResponseWriter, req *http.Request) {
+func PublicGenerateToken(rw http.ResponseWriter, req *http.Request) {
 	key := public.GenerateHexString()
 	err := redis.SetWithExpire(redis.PublicPool, key, config.OpenAccess.TokenValid, config.OpenAccess.TokenExpired)
 	rspdata := &ResponseData{}

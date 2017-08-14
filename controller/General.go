@@ -15,7 +15,7 @@ import (
 	"net/http"
 )
 
-func GetCfgVersion(rw http.ResponseWriter, req *http.Request) {
+func PublicCfgVersion(rw http.ResponseWriter, req *http.Request) {
 	rw.Write([]byte("[Success] config version  === " + config.Version))
 }
 

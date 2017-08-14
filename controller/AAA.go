@@ -71,7 +71,7 @@ func AAAAuthentication(rw http.ResponseWriter, req *http.Request) {
 	httprsp(rw, rsp)
 }
 
-func AAARegToken(rw http.ResponseWriter, req *http.Request) {
+func AAAGenerateToken(rw http.ResponseWriter, req *http.Request) {
 	defer func() {
 		recover()
 	}()

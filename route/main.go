@@ -23,5 +23,4 @@ func init() {
 	AAA()
 	Cloud()
 	Asset()
-	Template()
 }
