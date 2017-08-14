@@ -70,7 +70,7 @@ func CloudTokenRegistry(rw http.ResponseWriter, req *http.Request) {
 		httprsp(rw, rsp)
 		return
 	}
-	if !AAAValidateToken(v.PrivateToken.ID, v.PrivateToken.Signature) {
+	if config.AAAEnable && !AAAValidateToken(v.PrivateToken.ID, v.PrivateToken.Signature) {
 		rsp, _ := json.Marshal(ResponseErrmsg(1))
 		httprsp(rw, rsp)
 		return
@@ -131,10 +131,6 @@ func CloudServiceIsSupport(cloud string, service string) bool {
 	return false
 }
 
-// func Cloud_CommonCall(in *pb.CloudRequest, cloud string) (*pb.CloudResponse, bool) {
-// 	return nil, false
-// }
-
 func CloudAPICall(rw http.ResponseWriter, req *http.Request) {
 	cloud := GetRouteName(req, "cloud")
 	service := GetRouteName(req, "service")
@@ -152,7 +148,7 @@ func CloudAPICall(rw http.ResponseWriter, req *http.Request) {
 	json.Unmarshal(data, v)
 
 	if config.AAAEnable {
-		if AAAValidateToken(v.PrivateToken.ID, v.PrivateToken.Signature) {
+		if !AAAValidateToken(v.PrivateToken.ID, v.PrivateToken.Signature) {
 			rsp, _ := json.Marshal(ResponseErrmsg(2))
 			httprsp(rw, rsp)
 			return

@@ -1,82 +1,61 @@
-// /*
+/*
 
-// LICENSE:  MIT
-// Author:   sine
-// Email:    sinerwr@gmail.com
+LICENSE:  MIT
+Author:   sine
+Email:    sinerwr@gmail.com
 
-// */
+*/
 
 package controller
 
-// import (
-// 	"encoding/json"
-// 	"fmt"
-// 	"golang.org/x/net/context"
-// 	"net/http"
+import (
+	"encoding/json"
+	// "fmt"
+	// "github.com/getsentry/raven-go"
+	"golang.org/x/net/context"
+	"net/http"
 
-// 	"github.com/SiCo-Ops/Pb"
-// 	"github.com/SiCo-Ops/dao/mongo"
-// 	"github.com/SiCo-Ops/public"
-// )
+	"github.com/SiCo-Ops/Pb"
+	"github.com/SiCo-Ops/dao/grpc"
+	// "github.com/SiCo-Ops/dao/mongo"
+	// "github.com/SiCo-Ops/public"
+)
 
-// type AssetTemplate struct {
-// 	Auth  AuthToken         `json:"auth"`
-// 	Name  string            `json:"name"`
-// 	Param map[string]string `json:"param"`
-// }
+type AssetTemplate struct {
+	PrivateToken AuthenticationToken `json:"token"`
+	Name         string              `json:"name"`
+	Param        map[string]string   `json:"param"`
+}
 
-// func Asset_addTemplate(rw http.ResponseWriter, req *http.Request) {
-// 	v := AssetTemplate{}
-// 	if data, ok := AuthPostData(rw, req); ok {
-// 		json.Unmarshal(data, &v)
-// 	} else {
-// 		return
-// 	}
-// 	in := &pb.Asset_Req{}
-// 	if needAAA {
-// 		if AAA(v.Auth.Id, v.Auth.Signature) {
-// 			in.Id = v.Auth.Id
-// 			in.Name = v.Name
-// 			in.Param = v.Param
-// 			cc := dao.RpcConn(RpcAddr["Be"])
-// 			defer cc.Close()
-// 			c := pb.NewAseetClient(cc)
-// 			res, _ := c.AssetTemplate(context.Background(), in)
-// 			if res.Code == 2 {
-// 				LogErrMsg(51, "")
-// 				rsp, _ := json.Marshal(&ResponseData{2, "request error"})
-// 				httprsp(rw, rsp)
-// 				return
-// 			}
-// 			if res.Code == 1 {
-// 				rsp, _ := json.Marshal(&ResponseData{1, "Cannot use same template name"})
-// 				httprsp(rw, rsp)
-// 				return
-// 			}
-// 			rsp, _ := json.Marshal(&ResponseData{0, "Success add template"})
-// 			httprsp(rw, rsp)
-// 			return
-// 		} else {
-// 			rsp, _ := json.Marshal(&ResponseData{2, "AAA failed"})
-// 			httprsp(rw, rsp)
-// 			return
-// 		}
-// 	} else {
-// 		in.Id = v.Auth.Id
-// 		in.Name = v.Name
-// 		in.Param = v.Param
-// 		cc := dao.RpcConn(RpcAddr["Be"])
-// 		defer cc.Close()
-// 		c := pb.NewAseetClient(cc)
-// 		res, _ := c.AssetTemplate(context.Background(), in)
-// 		if res.Code != 0 {
-// 			LogErrMsg(51, "")
-// 			rsp, _ := json.Marshal(&ResponseData{2, "request error"})
-// 			httprsp(rw, rsp)
-// 			return
-// 		}
-// 	}
-// }
+func AssetCreateTemplate(rw http.ResponseWriter, req *http.Request) {
+	v := AssetTemplate{}
+	if data, ok := ValidatePostData(rw, req); ok {
+		json.Unmarshal(data, &v)
+	} else {
+		return
+	}
+	in := &pb.AssetTemplateCall{}
+	if config.AAAEnable && !AAAValidateToken(v.PrivateToken.ID, v.PrivateToken.Signature) {
+		rsp, _ := json.Marshal(ResponseErrmsg(2))
+		httprsp(rw, rsp)
+		return
+	}
+	in.Id = v.PrivateToken.ID
+	in.Name = v.Name
+	in.Param = v.Param
+	cc := rpc.RPCConn(RPCAddr["Be"])
+	defer cc.Close()
+	c := pb.NewAssetClient(cc)
+	res, _ := c.CreateTemplateRPC(context.Background(), in)
+	if res.Code == 0 {
+		rsp, _ := json.Marshal(&ResponseData{0, "Success add template"})
+		httprsp(rw, rsp)
+		return
+	}
+	rsp, _ := json.Marshal(res)
+	httprsp(rw, rsp)
+	return
+}
 
 // func Asset_synchronize(rw http.ResponseWriter, req *http.Request) {
 // 	cloud := GetRouteName(req, "cloud")
