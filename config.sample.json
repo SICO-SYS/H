@@ -1,80 +1,70 @@
 {
-  "version": "0.0",
+  "Version": "0.0",
+
+  "AAAEnable": true,
+  
+  "OpenAccess": {
+    "TokenValid": true,
+    "TokenExpired": 15
+  },
+
   "mysql": {
-    "default": {
+    "testing": {
       "host": "127.0.0.1",
       "port": "3306",
-      "user": "root",
-      "pass": "xxZ8SyeS3ryyoN",
-      "name": "default"
-    },
-    "user": {
-      "host": "127.0.0.1",
-      "port": "3306",
-      "user": "root",
-      "pass": "xxZ8SyeS3ryyoN",
-      "name": "user"
+      "username": "root",
+      "password": "xxZ8SyeS3ryyoN",
+      "database": "testing"
     }
   },
+  
   "mongo": {
-    "default": {
-      "addr": "127.0.0.1:27017",
-      "user": "root",
-      "pass": "xxZ8SyeS3ryyoN"
+    "testing": {
+      "address": "127.0.0.1:27017",
+      "username": "root",
+      "password": "xxZ8SyeS3ryyoN"
     },
     "user": {
-      "addr": "127.0.0.1:27017",
-      "user": "root",
-      "pass": "xxZ8SyeS3ryyoN"
+      "address": "127.0.0.1:27017",
+      "username": "root",
+      "password": "xxZ8SyeS3ryyoN"
     },
     "cloud": {
-      "addr": "127.0.0.1:27017",
-      "user": "root",
-      "pass": "xxZ8SyeS3ryyoN"
+      "address": "127.0.0.1:27017",
+      "username": "root",
+      "password": "xxZ8SyeS3ryyoN"
     },
     "asset": {
-      "addr": "127.0.0.1:27017",
-      "user": "root",
-      "pass": "xxZ8SyeS3ryyoN"
+      "address": "127.0.0.1:27017",
+      "username": "root",
+      "password": "xxZ8SyeS3ryyoN"
     }
   },
+  
   "redis": {
-    "default": {
+    "public": {
       "host": "127.0.0.1",
       "port": "6379",
-      "pass": "password"
+      "auth": "password"
     }
   },
+  
   "rabbit": {
-    "default": {
+    "testing": {
+      "host": "127.0.0.1",
+      "port": "5671",
       "user": "guest",
       "pass": "guest",
-      "host": "127.0.0.1",
-      "port": "5671"
-    },
-    "AAA": {
-      "user": "guest",
-      "pass": "guest",
-      "host": "127.0.0.1",
-      "port": "5671"
+      "topic": "topic"
     }
   },
-  "rpc": {
+  
+  "rpcport": {
     "He": ":6666",
     "Li": ":6667",
     "Be": ":6668",
     "B": ":6669",
     "C": ":6665",
     "N": ":6664"
-  },
-  "OpenAccess": {
-    "TokenValid": true,
-    "TokenExpired": 15
-  },
-  "log": {
-    "logpath" : "./log/",
-    "warning": "warning.log",
-    "error": "error.log",
-    "fatal": "fatal.log"    
   }
 }
