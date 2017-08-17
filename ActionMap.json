@@ -1,0 +1,171 @@
+{
+  "list_ins": {
+    "aws": {},
+    "aliyun": {},
+    "qcloud": {
+      "cvm": "DescribeInstances",
+      "cdb": "DescribeCdbInstances",
+      "image": "DescribeImages",
+      "vpc": "DescribeVpcEx",
+      "cbs": "",
+      "mongo": "",
+      "redis": "",
+      "scalling": "",
+      "dfw": "DescribeSecurityGroups",
+      "trade": ""
+    }
+  },
+
+  "list_ins_sub": {
+    "aws": {},
+    "aliyun": {},
+    "qcloud": {
+      "cvm": "DescribeInstanceTypeConfigs",
+      "cdb": "",
+      "image": "",
+      "vpc": "DescribeSubnetEx",
+      "cbs": "",
+      "mongo": "",
+      "redis": "",
+      "scalling": "",
+      "dfw": "",
+      "trade": ""
+    }
+  },
+
+  "list_ins_auth": {
+    "aws": {},
+    "aliyun": {},
+    "qcloud": {
+      "cvm": "DescribeKeyPairs",
+      "cdb": "",
+      "image": "",
+      "vpc": "",
+      "cbs": "",
+      "mongo": "",
+      "redis": "",
+      "scalling": "",
+      "dfw": "",
+      "trade": ""
+    }
+  },
+
+  "list_ins_zone": {
+    "aws": {},
+    "aliyun": {},
+    "qcloud": {
+      "cvm": "DescribeZones",
+      "cdb": "",
+      "image": "",
+      "vpc": "",
+      "cbs": "",
+      "mongo": "",
+      "redis": "",
+      "scalling": "",
+      "dfw": "",
+      "trade": "DescribeProductRegionList"
+    }
+  },
+
+  "create_ins": {
+    "aws": {},
+    "aliyun": {},
+    "qcloud": {
+      "cvm": "RunInstances",
+      "cdb": "",
+      "image": "",
+      "vpc": "",
+      "cbs": "",
+      "mongo": "",
+      "redis": "",
+      "scalling": "",
+      "dfw": "",
+      "trade": ""
+    }
+  },
+
+  "create_ins_sub": {
+    "aws": {},
+    "aliyun": {},
+    "qcloud": {
+      "cvm": "",
+      "cdb": "",
+      "image": "",
+      "vpc": "",
+      "cbs": "",
+      "mongo": "",
+      "redis": "",
+      "scalling": "",
+      "dfw": "",
+      "trade": ""
+    }
+  },
+
+  "del_ins": {
+    "aws": {},
+    "aliyun": {},
+    "qcloud": {
+      "cvm": "",
+      "cdb": "",
+      "image": "",
+      "vpc": "",
+      "cbs": "",
+      "mongo": "",
+      "redis": "",
+      "scalling": "",
+      "dfw": "",
+      "trade": ""
+    }
+  },
+
+  "del_ins_sub": {
+    "aws": {},
+    "aliyun": {},
+    "qcloud": {
+      "cvm": "",
+      "cdb": "",
+      "image": "",
+      "vpc": "",
+      "cbs": "",
+      "mongo": "",
+      "redis": "",
+      "scalling": "",
+      "dfw": "",
+      "trade": ""
+    }
+  },
+
+  "up_ins": {
+    "aws": {},
+    "aliyun": {},
+    "qcloud": {
+      "cvm": "",
+      "cdb": "",
+      "image": "",
+      "vpc": "",
+      "cbs": "",
+      "mongo": "",
+      "redis": "",
+      "scalling": "",
+      "dfw": "",
+      "trade": ""
+    }
+  },
+
+  "up_ins_sub": {
+    "aws": {},
+    "aliyun": {},
+    "qcloud": {
+      "cvm": "",
+      "cdb": "",
+      "image": "",
+      "vpc": "",
+      "cbs": "",
+      "mongo": "",
+      "redis": "",
+      "scalling": "",
+      "dfw": "",
+      "trade": ""
+    }
+  }
+}

@@ -10,16 +10,21 @@ package controller
 
 import (
 	"encoding/json"
+	"github.com/getsentry/raven-go"
 	"github.com/gorilla/mux"
 	"io/ioutil"
 	"net/http"
+)
+
+var (
+	getAction map[string]interface{}
 )
 
 func PublicCfgVersion(rw http.ResponseWriter, req *http.Request) {
 	rw.Write([]byte("[Success] config version  === " + config.Version))
 }
 
-func GetRouteName(req *http.Request, name string) string {
+func getRouteName(req *http.Request, name string) string {
 	return mux.Vars(req)[name]
 }
 
@@ -40,6 +45,28 @@ func httprsp(rw http.ResponseWriter, rsp []byte) {
 	rw.Write(rsp)
 }
 
+func actionMap(cloud string, service string, action string) (string, bool) {
+	d, err := ioutil.ReadFile("ActionMap.json")
+	if err != nil {
+		raven.CaptureError(err, nil)
+	}
+	json.Unmarshal(d, &getAction)
+
+	getCloud, ok := getAction[action].(map[string]interface{})
+	if ok {
+		getService, ok := getCloud[cloud].(map[string]interface{})
+		if ok {
+			value, ok := getService[service].(string)
+			if ok {
+				return value, true
+			}
+			return "", false
+		}
+		return "", false
+	}
+	return "", false
+}
+
 type ResponseData struct {
 	Code int8        `json:"code"`
 	Data interface{} `json:"data"`
@@ -52,11 +79,13 @@ func ErrorMessage(c int8) string {
 	case 1:
 		msg = "[Failed] AAA Failed"
 	case 2:
-		msg = "[Failed] Request Params Incorrect"
+		msg = "[Failed] Params missing or incorrect"
 	case 3:
 		msg = "[Failed] Request Timeout"
 	case 4:
 		msg = "[Failed] Request Forbidden"
+	case 5:
+		msg = "[Failed] Invalid Public Token"
 	case 10:
 		msg = "[Failed] Do not hack the system"
 	// 100 - 120 System Error

@@ -24,6 +24,7 @@ type PrivateToken struct {
 }
 
 type AuthenticationToken struct {
+	Token     string `json:"token"`
 	ID        string `json:"id"`
 	Signature string `json:"signature"`
 }
@@ -62,6 +63,12 @@ func AAAAuthentication(rw http.ResponseWriter, req *http.Request) {
 	} else {
 		return
 	}
+	if !ValidateOpenToken(v.Token) {
+		rsp, _ := json.Marshal(ResponseErrmsg(5))
+		httprsp(rw, rsp)
+		return
+	}
+
 	if AAAValidateToken(v.ID, v.Signature) {
 		rsp, _ := json.Marshal(&ResponseData{0, "Success"})
 		httprsp(rw, rsp)
@@ -82,25 +89,25 @@ func AAAGenerateToken(rw http.ResponseWriter, req *http.Request) {
 	} else {
 		return
 	}
-	if ValidateOpenToken(v.Token) {
-		if v.Email == "" {
-			rsp, _ := json.Marshal(ResponseErrmsg(2))
-			httprsp(rw, rsp)
-			return
-		}
-		cc := rpc.RPCConn(RPCAddr["He"])
-		defer cc.Close()
-		c := pb.NewAAAPublicServiceClient(cc)
-		r, _ := c.GenerateTokenRPC(context.Background(), &pb.AAAGenerateTokenCall{Email: v.Email, Phone: v.Phone})
-		if r.Id != "" {
-			rsp, _ := json.Marshal(&PrivateToken{ID: r.Id, Key: r.Key})
-			httprsp(rw, rsp)
-			return
-		}
-		rsp, _ := json.Marshal(&PrivateToken{"", ""})
+	if !ValidateOpenToken(v.Token) {
+		rsp, _ := json.Marshal(ResponseErrmsg(4))
 		httprsp(rw, rsp)
-	} else {
-		rw.WriteHeader(http.StatusUnauthorized)
-		rw.Write([]byte("Permission Denied"))
+		return
 	}
+	if v.Email == "" {
+		rsp, _ := json.Marshal(ResponseErrmsg(2))
+		httprsp(rw, rsp)
+		return
+	}
+	cc := rpc.RPCConn(RPCAddr["He"])
+	defer cc.Close()
+	c := pb.NewAAAPublicServiceClient(cc)
+	r, _ := c.GenerateTokenRPC(context.Background(), &pb.AAAGenerateTokenCall{Email: v.Email, Phone: v.Phone})
+	if r.Id != "" {
+		rsp, _ := json.Marshal(&PrivateToken{ID: r.Id, Key: r.Key})
+		httprsp(rw, rsp)
+		return
+	}
+	rsp, _ := json.Marshal(&PrivateToken{"", ""})
+	httprsp(rw, rsp)
 }

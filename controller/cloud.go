@@ -37,12 +37,19 @@ type ThirdToken struct {
 
 type CloudAPIRequest struct {
 	PrivateToken   AuthenticationToken `json:"token"`
-	CloudTokenID   string              `json:"id"`
-	CloudTokenKey  string              `json:"key"`
 	CloudTokenName string              `json:"name"`
 	Region         string              `json:"region"`
 	Action         string              `json:"action"`
 	Param          map[string]string   `json:"params"`
+}
+
+type CloudAPIRawRequest struct {
+	Token         string            `json:"token"`
+	CloudTokenID  string            `json:"cloudid"`
+	CloudTokenKey string            `json:"cloudkey"`
+	Region        string            `json:"region"`
+	Action        string            `json:"action"`
+	Param         map[string]string `json:"params"`
 }
 
 type CloudAPIResponse struct {
@@ -88,7 +95,7 @@ func CloudTokenRegistry(rw http.ResponseWriter, req *http.Request) {
 	if err != nil {
 		raven.CaptureError(err, nil)
 	}
-	if r.Id == "" {
+	if r.Id != "" {
 		rsp, _ := json.Marshal(&ResponseData{0, "Success"})
 		httprsp(rw, rsp)
 		return
@@ -102,10 +109,13 @@ func CloudTokenGet(id string, cloud string, name string) (string, string) {
 	in.AAATokenID = id
 	in.Cloud = cloud
 	in.Name = name
-	cc := rpc.RPCConn(RPCAddr["He"])
+	cc := rpc.RPCConn(RPCAddr["Li"])
 	defer cc.Close()
 	c := pb.NewCloudTokenServiceClient(cc)
-	res, _ := c.TokenGet(context.Background(), in)
+	res, err := c.TokenGet(context.Background(), in)
+	if err != nil {
+		raven.CaptureError(err, nil)
+	}
 	if res.Id != "" {
 		return res.Id, res.Key
 	}
@@ -132,14 +142,6 @@ func CloudServiceIsSupport(cloud string, service string) bool {
 }
 
 func CloudAPICall(rw http.ResponseWriter, req *http.Request) {
-	cloud := GetRouteName(req, "cloud")
-	service := GetRouteName(req, "service")
-	if !CloudServiceIsSupport(cloud, service) {
-		rsp, _ := json.Marshal(ResponseErrmsg(3))
-		httprsp(rw, rsp)
-		return
-	}
-
 	data, ok := ValidatePostData(rw, req)
 	if !ok {
 		return
@@ -147,19 +149,24 @@ func CloudAPICall(rw http.ResponseWriter, req *http.Request) {
 	v := &CloudAPIRequest{}
 	json.Unmarshal(data, v)
 
-	if config.AAAEnable {
-		if !AAAValidateToken(v.PrivateToken.ID, v.PrivateToken.Signature) {
-			rsp, _ := json.Marshal(ResponseErrmsg(2))
-			httprsp(rw, rsp)
-			return
-		}
-		cloudTokenID, cloudTokenKey = CloudTokenGet(v.PrivateToken.ID, cloud, v.CloudTokenName)
-	} else {
-		cloudTokenID = v.CloudTokenID
-		cloudTokenKey = v.CloudTokenKey
+	if !AAAValidateToken(v.PrivateToken.ID, v.PrivateToken.Signature) {
+		rsp, _ := json.Marshal(ResponseErrmsg(2))
+		httprsp(rw, rsp)
+		return
 	}
 
-	in := &pb.CloudAPICall{Service: service, Action: v.Action, Region: v.Region, CloudId: cloudTokenID, CloudKey: cloudTokenKey}
+	cloud := getRouteName(req, "cloud")
+	service := getRouteName(req, "service")
+	action, ok := actionMap(cloud, service, v.Action)
+	if !ok {
+		rsp, _ := json.Marshal(ResponseErrmsg(4))
+		httprsp(rw, rsp)
+		return
+	}
+
+	cloudTokenID, cloudTokenKey = CloudTokenGet(v.PrivateToken.ID, cloud, v.CloudTokenName)
+
+	in := &pb.CloudAPICall{Service: service, Action: action, Region: v.Region, CloudId: cloudTokenID, CloudKey: cloudTokenKey}
 	in.Params = v.Param
 	cc := rpc.RPCConn(RPCAddr["Li"])
 	defer cc.Close()
@@ -178,4 +185,42 @@ func CloudAPICall(rw http.ResponseWriter, req *http.Request) {
 	}
 	rsp, _ := json.Marshal(res)
 	httprsp(rw, rsp)
+}
+
+func CloudAPICallRaw(rw http.ResponseWriter, req *http.Request) {
+	data, ok := ValidatePostData(rw, req)
+	if !ok {
+		return
+	}
+	v := &CloudAPIRawRequest{}
+	json.Unmarshal(data, v)
+	if !ValidateOpenToken(v.Token) {
+		rsp, _ := json.Marshal(ResponseErrmsg(5))
+		httprsp(rw, rsp)
+		return
+	}
+
+	cloud := getRouteName(req, "cloud")
+	service := getRouteName(req, "service")
+
+	in := &pb.CloudAPICall{Service: service, Action: v.Action, Region: v.Region, CloudId: v.CloudTokenID, CloudKey: v.CloudTokenKey}
+	in.Params = v.Param
+	cc := rpc.RPCConn(RPCAddr["Li"])
+	defer cc.Close()
+	c := pb.NewCloudAPIServiceClient(cc)
+	var res *pb.CloudAPIBack
+	switch cloud {
+	case "qcloud":
+		res, _ = c.QcloudRPC(context.Background(), in)
+	default:
+		res = &pb.CloudAPIBack{Code: 1, Msg: "Not ready support yet."}
+	}
+	if res.Code == 0 {
+		rsp := res.Data
+		httprsp(rw, rsp)
+		return
+	}
+	rsp, _ := json.Marshal(res)
+	httprsp(rw, rsp)
+
 }

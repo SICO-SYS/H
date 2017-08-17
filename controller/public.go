@@ -36,11 +36,8 @@ func PublicGenerateToken(rw http.ResponseWriter, req *http.Request) {
 }
 
 func ValidateOpenToken(k string) bool {
-	data, err1, err2 := redis.GetWithKey(redis.PublicPool, k)
-	if err1 != nil {
-		return false
-	}
-	if err2 != nil {
+	data, err := redis.ExpiredAfterGetWithKey(redis.PublicPool, k)
+	if err != nil {
 		return false
 	}
 	ok, err := redis.ValueIsBool(data)
