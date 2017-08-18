@@ -166,18 +166,13 @@ func CloudAPICall(rw http.ResponseWriter, req *http.Request) {
 
 	cloudTokenID, cloudTokenKey = CloudTokenGet(v.PrivateToken.ID, cloud, v.CloudTokenName)
 
-	in := &pb.CloudAPICall{Service: service, Action: action, Region: v.Region, CloudId: cloudTokenID, CloudKey: cloudTokenKey}
+	in := &pb.CloudAPICall{Cloud: cloud, Service: service, Action: action, Region: v.Region, CloudId: cloudTokenID, CloudKey: cloudTokenKey}
 	in.Params = v.Param
 	cc := rpc.RPCConn(RPCAddr["Li"])
 	defer cc.Close()
 	c := pb.NewCloudAPIServiceClient(cc)
 	var res *pb.CloudAPIBack
-	switch cloud {
-	case "qcloud":
-		res, _ = c.QcloudRPC(context.Background(), in)
-	default:
-		res = &pb.CloudAPIBack{Code: 1, Msg: "Not ready support yet."}
-	}
+	res, _ = c.RequestRPC(context.Background(), in)
 	if res.Code == 0 {
 		rsp := res.Data
 		httprsp(rw, rsp)
@@ -203,18 +198,13 @@ func CloudAPICallRaw(rw http.ResponseWriter, req *http.Request) {
 	cloud := getRouteName(req, "cloud")
 	service := getRouteName(req, "service")
 
-	in := &pb.CloudAPICall{Service: service, Action: v.Action, Region: v.Region, CloudId: v.CloudTokenID, CloudKey: v.CloudTokenKey}
+	in := &pb.CloudAPICall{Cloud: cloud, Service: service, Action: v.Action, Region: v.Region, CloudId: v.CloudTokenID, CloudKey: v.CloudTokenKey}
 	in.Params = v.Param
 	cc := rpc.RPCConn(RPCAddr["Li"])
 	defer cc.Close()
 	c := pb.NewCloudAPIServiceClient(cc)
 	var res *pb.CloudAPIBack
-	switch cloud {
-	case "qcloud":
-		res, _ = c.QcloudRPC(context.Background(), in)
-	default:
-		res = &pb.CloudAPIBack{Code: 1, Msg: "Not ready support yet."}
-	}
+	res, _ = c.RequestRPC(context.Background(), in)
 	if res.Code == 0 {
 		rsp := res.Data
 		httprsp(rw, rsp)
