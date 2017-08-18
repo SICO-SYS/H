@@ -11,7 +11,7 @@ package controller
 import (
 	"encoding/json"
 	// "fmt"
-	// "github.com/getsentry/raven-go"
+	"github.com/getsentry/raven-go"
 	"golang.org/x/net/context"
 	"net/http"
 
@@ -36,7 +36,7 @@ func AssetCreateTemplate(rw http.ResponseWriter, req *http.Request) {
 	}
 	in := &pb.AssetTemplateCall{}
 	if config.AAAEnable && !AAAValidateToken(v.PrivateToken.ID, v.PrivateToken.Signature) {
-		rsp, _ := json.Marshal(ResponseErrmsg(2))
+		rsp, _ := json.Marshal(ResponseErrmsg(1))
 		httprsp(rw, rsp)
 		return
 	}
@@ -46,7 +46,10 @@ func AssetCreateTemplate(rw http.ResponseWriter, req *http.Request) {
 	cc := rpc.RPCConn(RPCAddr["Be"])
 	defer cc.Close()
 	c := pb.NewAssetServiceClient(cc)
-	res, _ := c.CreateTemplateRPC(context.Background(), in)
+	res, err := c.CreateTemplateRPC(context.Background(), in)
+	if err != nil {
+		raven.CaptureError(err, nil)
+	}
 	if res.Code == 0 {
 		rsp, _ := json.Marshal(&ResponseData{0, "Success add template"})
 		httprsp(rw, rsp)
