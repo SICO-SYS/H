@@ -10,7 +10,6 @@ package controller
 
 import (
 	"encoding/json"
-	// "fmt"
 	"github.com/getsentry/raven-go"
 	"golang.org/x/net/context"
 	"net/http"

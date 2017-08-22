@@ -142,6 +142,9 @@ func CloudServiceIsSupport(cloud string, service string) bool {
 }
 
 func CloudAPICall(rw http.ResponseWriter, req *http.Request) {
+	defer func() {
+		recover()
+	}()
 	data, ok := ValidatePostData(rw, req)
 	if !ok {
 		return
@@ -183,6 +186,9 @@ func CloudAPICall(rw http.ResponseWriter, req *http.Request) {
 }
 
 func CloudAPICallRaw(rw http.ResponseWriter, req *http.Request) {
+	defer func() {
+		recover()
+	}()
 	data, ok := ValidatePostData(rw, req)
 	if !ok {
 		return
@@ -203,11 +209,12 @@ func CloudAPICallRaw(rw http.ResponseWriter, req *http.Request) {
 	cc := rpc.RPCConn(RPCAddr["Li"])
 	defer cc.Close()
 	c := pb.NewCloudAPIServiceClient(cc)
-	var res *pb.CloudAPIBack
-	res, _ = c.RequestRPC(context.Background(), in)
+	res, err := c.RequestRPC(context.Background(), in)
+	if err != nil {
+		raven.CaptureError(err, nil)
+	}
 	if res.Code == 0 {
-		rsp := res.Data
-		httprsp(rw, rsp)
+		httprsp(rw, res.Data)
 		return
 	}
 	rsp, _ := json.Marshal(res)
