@@ -214,7 +214,11 @@ func CloudAPICallRaw(rw http.ResponseWriter, req *http.Request) {
 		raven.CaptureError(err, nil)
 	}
 	if res.Code == 0 {
-		httprsp(rw, res.Data)
+		if cloud == "aws" {
+			httpResponse("xml", rw, res.Data)
+		} else {
+			httpResponse("json", rw, res.Data)
+		}
 		return
 	}
 	rsp, _ := json.Marshal(res)
