@@ -45,6 +45,16 @@ func httprsp(rw http.ResponseWriter, rsp []byte) {
 	rw.Write(rsp)
 }
 
+func httpResponse(contentType string, rw http.ResponseWriter, rsp []byte) {
+	switch contentType {
+	case "xml":
+		rw.Header().Add("Content-Type", "application/xml")
+	default:
+		rw.Header().Add("Content-Type", "application/json")
+	}
+	rw.Write(rsp)
+}
+
 func actionMap(cloud string, service string, action string) (string, bool) {
 	d, err := ioutil.ReadFile("ActionMap.json")
 	if err != nil {
