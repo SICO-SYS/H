@@ -1,6 +1,8 @@
 {
-  "list_ins": {
-    "aws": {},
+  "DescribeInstances": {
+    "aws": {
+      "ec2": "DescribeInstances"
+    },
     "aliyun": {},
     "qcloud": {
       "cvm": "DescribeInstances",
@@ -16,7 +18,7 @@
     }
   },
 
-  "list_ins_sub": {
+  "DescribeInstancesSubmodule": {
     "aws": {},
     "aliyun": {},
     "qcloud": {
@@ -33,7 +35,7 @@
     }
   },
 
-  "list_ins_auth": {
+  "DescribeKeyPairs": {
     "aws": {},
     "aliyun": {},
     "qcloud": {
@@ -50,7 +52,7 @@
     }
   },
 
-  "list_ins_zone": {
+  "DescribeZones": {
     "aws": {},
     "aliyun": {},
     "qcloud": {
@@ -67,7 +69,7 @@
     }
   },
 
-  "create_ins": {
+  "createInstances": {
     "aws": {},
     "aliyun": {},
     "qcloud": {
@@ -84,75 +86,7 @@
     }
   },
 
-  "create_ins_sub": {
-    "aws": {},
-    "aliyun": {},
-    "qcloud": {
-      "cvm": "",
-      "cdb": "",
-      "image": "",
-      "vpc": "",
-      "cbs": "",
-      "mongo": "",
-      "redis": "",
-      "scalling": "",
-      "dfw": "",
-      "trade": ""
-    }
-  },
-
-  "del_ins": {
-    "aws": {},
-    "aliyun": {},
-    "qcloud": {
-      "cvm": "",
-      "cdb": "",
-      "image": "",
-      "vpc": "",
-      "cbs": "",
-      "mongo": "",
-      "redis": "",
-      "scalling": "",
-      "dfw": "",
-      "trade": ""
-    }
-  },
-
-  "del_ins_sub": {
-    "aws": {},
-    "aliyun": {},
-    "qcloud": {
-      "cvm": "",
-      "cdb": "",
-      "image": "",
-      "vpc": "",
-      "cbs": "",
-      "mongo": "",
-      "redis": "",
-      "scalling": "",
-      "dfw": "",
-      "trade": ""
-    }
-  },
-
-  "up_ins": {
-    "aws": {},
-    "aliyun": {},
-    "qcloud": {
-      "cvm": "",
-      "cdb": "",
-      "image": "",
-      "vpc": "",
-      "cbs": "",
-      "mongo": "",
-      "redis": "",
-      "scalling": "",
-      "dfw": "",
-      "trade": ""
-    }
-  },
-
-  "up_ins_sub": {
+ "deleteInstances": {
     "aws": {},
     "aliyun": {},
     "qcloud": {
