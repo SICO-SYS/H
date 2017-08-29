@@ -17,7 +17,6 @@ import (
 
 	"github.com/SiCo-Ops/Pb"
 	"github.com/SiCo-Ops/dao/grpc"
-	// "github.com/SiCo-Ops/dao/mongo"
 )
 
 var (
@@ -74,12 +73,12 @@ func CloudTokenRegistry(rw http.ResponseWriter, req *http.Request) {
 	}
 	if v.Name == "" || v.Cloud == "" || v.ID == "" {
 		rsp, _ := json.Marshal(ResponseErrmsg(2))
-		httprsp(rw, rsp)
+		httpResponse("json", rw, rsp)
 		return
 	}
 	if config.AAAEnable && !AAAValidateToken(v.PrivateToken.ID, v.PrivateToken.Signature) {
 		rsp, _ := json.Marshal(ResponseErrmsg(1))
-		httprsp(rw, rsp)
+		httpResponse("json", rw, rsp)
 		return
 	}
 	cc := rpc.RPCConn(RPCAddr["Li"])
@@ -97,11 +96,11 @@ func CloudTokenRegistry(rw http.ResponseWriter, req *http.Request) {
 	}
 	if r.Id != "" {
 		rsp, _ := json.Marshal(&ResponseData{0, "Success"})
-		httprsp(rw, rsp)
+		httpResponse("json", rw, rsp)
 		return
 	}
 	rsp, _ := json.Marshal(ResponseErrmsg(2))
-	httprsp(rw, rsp)
+	httpResponse("json", rw, rsp)
 }
 
 func CloudTokenGet(id string, cloud string, name string) (string, string) {
@@ -141,6 +140,21 @@ func CloudServiceIsSupport(cloud string, service string) bool {
 	return false
 }
 
+func CloudAPIRPC(in *pb.CloudAPICall) *pb.CloudAPIBack {
+	defer func() {
+		recover()
+	}()
+	cc := rpc.RPCConn(RPCAddr["Li"])
+	defer cc.Close()
+	c := pb.NewCloudAPIServiceClient(cc)
+	res, err := c.RequestRPC(context.Background(), in)
+	if err != nil {
+		raven.CaptureError(err, nil)
+		return &pb.CloudAPIBack{Code: -1, Msg: ""}
+	}
+	return res
+}
+
 func CloudAPICall(rw http.ResponseWriter, req *http.Request) {
 	defer func() {
 		recover()
@@ -154,7 +168,7 @@ func CloudAPICall(rw http.ResponseWriter, req *http.Request) {
 
 	if !AAAValidateToken(v.PrivateToken.ID, v.PrivateToken.Signature) {
 		rsp, _ := json.Marshal(ResponseErrmsg(2))
-		httprsp(rw, rsp)
+		httpResponse("json", rw, rsp)
 		return
 	}
 
@@ -163,7 +177,7 @@ func CloudAPICall(rw http.ResponseWriter, req *http.Request) {
 	action, ok := actionMap(cloud, service, v.Action)
 	if !ok {
 		rsp, _ := json.Marshal(ResponseErrmsg(4))
-		httprsp(rw, rsp)
+		httpResponse("json", rw, rsp)
 		return
 	}
 
@@ -171,24 +185,17 @@ func CloudAPICall(rw http.ResponseWriter, req *http.Request) {
 
 	in := &pb.CloudAPICall{Cloud: cloud, Service: service, Action: action, Region: v.Region, CloudId: cloudTokenID, CloudKey: cloudTokenKey}
 	in.Params = v.Param
-	cc := rpc.RPCConn(RPCAddr["Li"])
-	defer cc.Close()
-	c := pb.NewCloudAPIServiceClient(cc)
-	var res *pb.CloudAPIBack
-	res, _ = c.RequestRPC(context.Background(), in)
+	res := CloudAPIRPC(in)
 	if res.Code == 0 {
 		rsp := res.Data
-		httprsp(rw, rsp)
+		httpResponse("json", rw, rsp)
 		return
 	}
 	rsp, _ := json.Marshal(res)
-	httprsp(rw, rsp)
+	httpResponse("json", rw, rsp)
 }
 
 func CloudAPICallRaw(rw http.ResponseWriter, req *http.Request) {
-	defer func() {
-		recover()
-	}()
 	data, ok := ValidatePostData(rw, req)
 	if !ok {
 		return
@@ -197,7 +204,7 @@ func CloudAPICallRaw(rw http.ResponseWriter, req *http.Request) {
 	json.Unmarshal(data, v)
 	if !ValidateOpenToken(v.Token) {
 		rsp, _ := json.Marshal(ResponseErrmsg(5))
-		httprsp(rw, rsp)
+		httpResponse("json", rw, rsp)
 		return
 	}
 
@@ -206,13 +213,7 @@ func CloudAPICallRaw(rw http.ResponseWriter, req *http.Request) {
 
 	in := &pb.CloudAPICall{Cloud: cloud, Service: service, Action: v.Action, Region: v.Region, CloudId: v.CloudTokenID, CloudKey: v.CloudTokenKey}
 	in.Params = v.Param
-	cc := rpc.RPCConn(RPCAddr["Li"])
-	defer cc.Close()
-	c := pb.NewCloudAPIServiceClient(cc)
-	res, err := c.RequestRPC(context.Background(), in)
-	if err != nil {
-		raven.CaptureError(err, nil)
-	}
+	res := CloudAPIRPC(in)
 	if res.Code == 0 {
 		if cloud == "aws" {
 			httpResponse("xml", rw, res.Data)
@@ -222,6 +223,6 @@ func CloudAPICallRaw(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 	rsp, _ := json.Marshal(res)
-	httprsp(rw, rsp)
+	httpResponse("json", rw, rsp)
 
 }

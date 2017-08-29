@@ -16,14 +16,19 @@ import (
 
 	"github.com/SiCo-Ops/Pb"
 	"github.com/SiCo-Ops/dao/grpc"
-	// "github.com/SiCo-Ops/dao/mongo"
-	// "github.com/SiCo-Ops/public"
+	"github.com/SiCo-Ops/public"
 )
 
 type AssetTemplate struct {
 	PrivateToken AuthenticationToken `json:"token"`
 	Name         string              `json:"name"`
 	Param        map[string]string   `json:"param"`
+}
+
+type AssetSynchronizeRequest struct {
+	PrivateToken   AuthenticationToken `json:"token"`
+	CloudTokenName string              `json:"name"`
+	Region         string              `json:"region"`
 }
 
 func AssetCreateTemplate(rw http.ResponseWriter, req *http.Request) {
@@ -44,8 +49,8 @@ func AssetCreateTemplate(rw http.ResponseWriter, req *http.Request) {
 	in.Param = v.Param
 	cc := rpc.RPCConn(RPCAddr["Be"])
 	defer cc.Close()
-	c := pb.NewAssetServiceClient(cc)
-	res, err := c.CreateTemplateRPC(context.Background(), in)
+	c := pb.NewTemplateServiceClient(cc)
+	res, err := c.CreateRPC(context.Background(), in)
 	if err != nil {
 		raven.CaptureError(err, nil)
 	}
@@ -59,70 +64,72 @@ func AssetCreateTemplate(rw http.ResponseWriter, req *http.Request) {
 	return
 }
 
-// func Asset_synchronize(rw http.ResponseWriter, req *http.Request) {
-// 	cloud := GetRouteName(req, "cloud")
-// 	bsns := GetRouteName(req, "bsns")
-// 	if !AuthBsns(cloud, bsns) {
-// 		rsp, _ := json.Marshal(&ResponseData{Code: 2, Data: "Cloud not support yet ,damn"})
-// 		httprsp(rw, rsp)
-// 		return
-// 	}
+func AssetSynchronizeRPC(in *pb.AssetSynchronizeCall) *pb.AssetMsgBack {
+	defer func() {
+		recover()
+	}()
+	cc := rpc.RPCConn(RPCAddr["Be"])
+	defer cc.Close()
+	c := pb.NewAssetServiceClient(cc)
+	res, err := c.SynchronizeRPC(context.Background(), in)
+	if err != nil {
+		raven.CaptureError(err, nil)
+		return &pb.AssetMsgBack{Code: -1, Msg: ""}
+	}
+	return res
+}
 
-// 	data, ok := AuthPostData(rw, req)
-// 	if !ok {
-// 		return
-// 	}
-// 	v := &Cloud_Req{}
-// 	json.Unmarshal(data, v)
+func AssetSynchronize(rw http.ResponseWriter, req *http.Request) {
+	defer func() {
+		recover()
+	}()
+	data, ok := ValidatePostData(rw, req)
+	if !ok {
+		return
+	}
 
-// 	/*
-// 		Control need AAA server to get Cloud id & key
-// 	*/
-// 	if needAAA {
-// 		cloud_id, cloud_key = AAA_GetThirdKey(cloud, v.Auth.Id, v.Auth.Signature, v.Name)
-// 		if cloud_id == "" {
-// 			rsp, _ := json.Marshal(&ResponseData{2, "AAA failed"})
-// 			httprsp(rw, rsp)
-// 			return
-// 		}
-// 	} else {
-// 		cloud_id = v.Auth.Id
-// 		cloud_key = v.Auth.Signature
-// 	}
+	v := &AssetSynchronizeRequest{}
+	json.Unmarshal(data, v)
 
-// 	in := &pb.CloudRequest{Bsns: bsns, Action: "list_ins", Region: v.Region, CloudId: cloud_id, CloudKey: cloud_key}
-// 	in.Params["Limit"] = "1"
-// 	res, ok := Cloud_CommonCall(in, "qcloud")
-// 	if res.Code == 0 {
-// 		v := make(map[string]interface{})
-// 		json.Unmarshal(res.Data, &v)
-// 		var count int
-// 		if bsns == "cvm" {
-// 			totalcount, ok := v["Response"].(map[string]interface{})["TotalCount"].(float64)
-// 			if ok {
-// 				count = int(totalcount)
-// 			}
-// 		} else {
-// 			totalcount, ok := v["totalCount"].(string)
-// 			if ok {
-// 				count = public.Atoi(totalcount)
-// 			}
-// 		}
+	if config.AAAEnable && !AAAValidateToken(v.PrivateToken.ID, v.PrivateToken.Signature) {
+		rsp, _ := json.Marshal(ResponseErrmsg(1))
+		httprsp(rw, rsp)
+		return
+	}
 
-// 		var looptime int
-// 		if count%100 == 0 {
-// 			looptime = count / 100
-// 		} else {
-// 			looptime = count/100 + 1
-// 		}
-// 		in.Params["Limit"] = "100"
-// 		for i := 0; i < looptime; i++ {
-// 			in.Params["Offset"] = public.Itoa(i * 100)
-// 			fmt.Println(in)
-// 		}
-// 	}
-// 	rsp, _ := json.Marshal(&Cloud_Res{Code: 2, Msg: res.Msg})
-// 	httprsp(rw, rsp)
+	cloud := getRouteName(req, "cloud")
+	service := getRouteName(req, "service")
+	action, ok := actionMap(cloud, service, "DescribeInstances")
+	if !ok {
+		rsp, _ := json.Marshal(ResponseErrmsg(4))
+		httprsp(rw, rsp)
+		return
+	}
 
-// 	// collectionName := "asset."
-// }
+	cloudTokenID, cloudTokenKey = CloudTokenGet(v.PrivateToken.ID, cloud, v.CloudTokenName)
+
+	var moreSource bool = true
+	for i := 0; moreSource; i++ {
+		in := &pb.CloudAPICall{Cloud: cloud, Service: service, Action: action, Region: v.Region, CloudId: cloudTokenID, CloudKey: cloudTokenKey}
+		in.Params = make(map[string]string)
+		in.Params["Limit"] = "100"
+		in.Params["Offset"] = public.Int2String(i * 100)
+		res := CloudAPIRPC(in)
+		assetRes := AssetSynchronizeRPC(&pb.AssetSynchronizeCall{Id: cloudTokenID, Cloud: cloud, Service: service, Data: res.Data})
+		if assetRes.Code == -1 {
+			rsp, _ := json.Marshal(ResponseErrmsg(2))
+			httpResponse("json", rw, rsp)
+			moreSource = false
+			return
+		}
+
+		if assetRes.Code == 1 {
+			moreSource = false
+		}
+	}
+
+	if !moreSource {
+		rsp, _ := json.Marshal(&ResponseData{Code: 0, Data: "success"})
+		httpResponse("json", rw, rsp)
+	}
+}
