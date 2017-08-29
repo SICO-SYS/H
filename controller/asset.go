@@ -112,10 +112,11 @@ func AssetSynchronize(rw http.ResponseWriter, req *http.Request) {
 	for i := 0; moreSource; i++ {
 		in := &pb.CloudAPICall{Cloud: cloud, Service: service, Action: action, Region: v.Region, CloudId: cloudTokenID, CloudKey: cloudTokenKey}
 		in.Params = make(map[string]string)
-		in.Params["Limit"] = "100"
-		in.Params["Offset"] = public.Int2String(i * 100)
+		limit := 1
+		in.Params["Limit"] = public.Int2String(limit)
+		in.Params["Offset"] = public.Int2String(i * limit)
 		res := CloudAPIRPC(in)
-		assetRes := AssetSynchronizeRPC(&pb.AssetSynchronizeCall{Id: cloudTokenID, Cloud: cloud, Service: service, Data: res.Data})
+		assetRes := AssetSynchronizeRPC(&pb.AssetSynchronizeCall{Id: v.PrivateToken.ID, Cloud: cloud, Service: service, Data: res.Data})
 		if assetRes.Code == -1 {
 			rsp, _ := json.Marshal(ResponseErrmsg(2))
 			httpResponse("json", rw, rsp)
@@ -124,6 +125,11 @@ func AssetSynchronize(rw http.ResponseWriter, req *http.Request) {
 		}
 
 		if assetRes.Code == 1 {
+			moreSource = false
+		}
+
+		totalCount := public.String2Float(assetRes.Msg)
+		if public.Int2Float(i+1) >= totalCount/public.Int2Float(limit) {
 			moreSource = false
 		}
 	}
