@@ -8,9 +8,11 @@ RUN apk --update add git && \
     cd $GOPATH/src/github.com/SiCo-Ops/H && \
     cp config.sample.json $GOPATH/bin/config.json && \
     go-wrapper install && \
-    cd $GOPATH/bin &&\
+    cd / &&\
     rm -rf $GOPATH/src
 
 EXPOSE 2048
 
-CMD ["./H"]
+WORKDIR $GOPATH/bin
+
+CMD ["H"]
