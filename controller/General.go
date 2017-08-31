@@ -98,6 +98,11 @@ func ErrorMessage(c int8) string {
 		msg = "[Failed] Invalid Public Token"
 	case 10:
 		msg = "[Failed] Do not hack the system"
+	//21 - 30 Cloud problem
+	case 21:
+		msg = "[Failed] No support this cloud yet"
+	case 29:
+		msg = "[Failed] No support action for this cloud yet"
 	// 100 - 120 System Error
 	// 120 - 127 Middleware Error
 	case 125:

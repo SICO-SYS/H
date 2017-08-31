@@ -3,7 +3,9 @@
     "aws": {
       "ec2": "DescribeInstances"
     },
-    "aliyun": {},
+    "aliyun": {
+      "ecs": "DescribeInstances"
+    },
     "qcloud": {
       "cvm": "DescribeInstances",
       "cdb": "DescribeCdbInstances",

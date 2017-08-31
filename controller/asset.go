@@ -101,7 +101,7 @@ func AssetSynchronize(rw http.ResponseWriter, req *http.Request) {
 	service := getRouteName(req, "service")
 	action, ok := actionMap(cloud, service, "DescribeInstances")
 	if !ok {
-		rsp, _ := json.Marshal(ResponseErrmsg(4))
+		rsp, _ := json.Marshal(ResponseErrmsg(29))
 		httprsp(rw, rsp)
 		return
 	}
@@ -109,33 +109,33 @@ func AssetSynchronize(rw http.ResponseWriter, req *http.Request) {
 	cloudTokenID, cloudTokenKey = CloudTokenGet(v.PrivateToken.ID, cloud, v.CloudTokenName)
 
 	var moreSource bool = true
+	// in := &pb.CloudAPICall{Cloud: cloud, Service: service, Action: action, Region: v.Region, CloudId: cloudTokenID, CloudKey: cloudTokenKey}
 	for i := 0; moreSource; i++ {
-		in := &pb.CloudAPICall{Cloud: cloud, Service: service, Action: action, Region: v.Region, CloudId: cloudTokenID, CloudKey: cloudTokenKey}
-		in.Params = make(map[string]string)
-		limit := 1
-		in.Params["Limit"] = public.Int2String(limit)
-		in.Params["Offset"] = public.Int2String(i * limit)
+		in, size := CloudAPICallForLoop(cloud, service, v.Region, action, cloudTokenID, cloudTokenKey, i)
 		res := CloudAPIRPC(in)
-		assetRes := AssetSynchronizeRPC(&pb.AssetSynchronizeCall{Id: v.PrivateToken.ID, Cloud: cloud, Service: service, Data: res.Data})
-		if assetRes.Code == -1 {
-			rsp, _ := json.Marshal(ResponseErrmsg(2))
+		assetResponse := AssetSynchronizeRPC(&pb.AssetSynchronizeCall{Id: v.PrivateToken.ID, Cloud: cloud, Service: service, Data: res.Data})
+		if assetResponse.Code == -1 {
+			rsp, _ := json.Marshal(ResponseErrmsg(21))
 			httpResponse("json", rw, rsp)
 			moreSource = false
 			return
 		}
 
-		if assetRes.Code == 1 {
+		if assetResponse.Code == 1 {
 			moreSource = false
+			rsp, _ := json.Marshal(ResponseErrmsg(29))
+			httpResponse("json", rw, rsp)
+			return
 		}
 
-		totalCount := public.String2Float(assetRes.Msg)
-		if public.Int2Float(i+1) >= totalCount/public.Int2Float(limit) {
+		totalCount := public.String2Float(assetResponse.Msg)
+		if public.Int2Float(i+1) >= totalCount/public.Int2Float(size) {
 			moreSource = false
 		}
 	}
-
 	if !moreSource {
 		rsp, _ := json.Marshal(&ResponseData{Code: 0, Data: "success"})
 		httpResponse("json", rw, rsp)
+		return
 	}
 }

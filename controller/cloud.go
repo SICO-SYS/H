@@ -17,6 +17,7 @@ import (
 
 	"github.com/SiCo-Ops/Pb"
 	"github.com/SiCo-Ops/dao/grpc"
+	"github.com/SiCo-Ops/public"
 )
 
 var (
@@ -167,19 +168,20 @@ func CloudAPICall(rw http.ResponseWriter, req *http.Request) {
 	json.Unmarshal(data, v)
 
 	if !AAAValidateToken(v.PrivateToken.ID, v.PrivateToken.Signature) {
-		rsp, _ := json.Marshal(ResponseErrmsg(2))
+		rsp, _ := json.Marshal(ResponseErrmsg(1))
 		httpResponse("json", rw, rsp)
 		return
 	}
 
 	cloud := getRouteName(req, "cloud")
 	service := getRouteName(req, "service")
-	action, ok := actionMap(cloud, service, v.Action)
-	if !ok {
-		rsp, _ := json.Marshal(ResponseErrmsg(4))
-		httpResponse("json", rw, rsp)
-		return
-	}
+	// action, ok := actionMap(cloud, service, v.Action)
+	// if !ok {
+	// 	rsp, _ := json.Marshal(ResponseErrmsg(29))
+	// 	httpResponse("json", rw, rsp)
+	// 	return
+	// }
+	action := v.Action
 
 	cloudTokenID, cloudTokenKey = CloudTokenGet(v.PrivateToken.ID, cloud, v.CloudTokenName)
 
@@ -225,4 +227,28 @@ func CloudAPICallRaw(rw http.ResponseWriter, req *http.Request) {
 	rsp, _ := json.Marshal(res)
 	httpResponse("json", rw, rsp)
 
+}
+
+func CloudAPICallForLoop(cloud, service, region, action, cloudTokenID, cloudTokenKey string, page int) (in *pb.CloudAPICall, size int) {
+	in.Cloud = cloud
+	in.Service = service
+	in.Region = region
+	in.Action = action
+	in.CloudId = cloudTokenID
+	in.CloudKey = cloudTokenKey
+	in.Params = make(map[string]string)
+	switch cloud {
+	case "qcloud":
+		size = 100
+		in.Params["Limit"] = public.Int2String(size)
+		in.Params["Offset"] = public.Int2String(page * size)
+		return in, size
+	case "aliyun":
+		size = 100
+		in.Params["PageNumber"] = public.Int2String(page)
+		in.Params["PageSize"] = public.Int2String(size)
+		return in, size
+	default:
+		return &pb.CloudAPICall{}, size
+	}
 }
