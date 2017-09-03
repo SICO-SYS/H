@@ -109,29 +109,37 @@ func AssetSynchronize(rw http.ResponseWriter, req *http.Request) {
 	cloudTokenID, cloudTokenKey = CloudTokenGet(v.PrivateToken.ID, cloud, v.CloudTokenName)
 
 	var moreSource bool = true
-	// in := &pb.CloudAPICall{Cloud: cloud, Service: service, Action: action, Region: v.Region, CloudId: cloudTokenID, CloudKey: cloudTokenKey}
+	var nextToken string = ""
 	for i := 0; moreSource; i++ {
-		in, size := CloudAPICallForLoop(cloud, service, v.Region, action, cloudTokenID, cloudTokenKey, i)
+		in, size := CloudAPICallForLoop(cloud, service, v.Region, action, cloudTokenID, cloudTokenKey, nextToken, i)
 		res := CloudAPIRPC(in)
 		assetResponse := AssetSynchronizeRPC(&pb.AssetSynchronizeCall{Id: v.PrivateToken.ID, Cloud: cloud, Service: service, Data: res.Data})
-		if assetResponse.Code == -1 {
+		switch assetResponse.Code {
+		case -1:
 			rsp, _ := json.Marshal(ResponseErrmsg(21))
 			httpResponse("json", rw, rsp)
 			moreSource = false
 			return
-		}
-
-		if assetResponse.Code == 1 {
-			moreSource = false
-			rsp, _ := json.Marshal(ResponseErrmsg(29))
+		case 1:
+			// code = 1 , for AWS
+			if assetResponse.Msg != "" {
+				nextToken = assetResponse.Msg
+			} else {
+				moreSource = false
+			}
+		case 2:
+			// code = 2 , for Qcloud,Aliyun
+			totalCount := public.String2Float(assetResponse.Msg)
+			if public.Int2Float(i+1) >= totalCount/public.Int2Float(size) {
+				moreSource = false
+			}
+		default:
+			rsp, _ := json.Marshal(ResponseErrmsg(127))
 			httpResponse("json", rw, rsp)
+			moreSource = false
 			return
 		}
 
-		totalCount := public.String2Float(assetResponse.Msg)
-		if public.Int2Float(i+1) >= totalCount/public.Int2Float(size) {
-			moreSource = false
-		}
 	}
 	if !moreSource {
 		rsp, _ := json.Marshal(&ResponseData{Code: 0, Data: "success"})
