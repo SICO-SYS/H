@@ -100,7 +100,7 @@ func ErrorMessage(c int8) string {
 		msg = "[Failed] Do not hack the system"
 	//21 - 30 Cloud problem
 	case 21:
-		msg = "[Failed] No support this cloud yet"
+		msg = "[Failed] No support this cloud or service yet"
 	case 29:
 		msg = "[Failed] No support action for this cloud yet"
 	// 100 - 120 System Error
