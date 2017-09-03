@@ -189,8 +189,11 @@ func CloudAPICall(rw http.ResponseWriter, req *http.Request) {
 	in.Params = v.Param
 	res := CloudAPIRPC(in)
 	if res.Code == 0 {
-		rsp := res.Data
-		httpResponse("json", rw, rsp)
+		if cloud == "aws" {
+			httpResponse("xml", rw, res.Data)
+		} else {
+			httpResponse("json", rw, res.Data)
+		}
 		return
 	}
 	rsp, _ := json.Marshal(res)
@@ -229,7 +232,8 @@ func CloudAPICallRaw(rw http.ResponseWriter, req *http.Request) {
 
 }
 
-func CloudAPICallForLoop(cloud, service, region, action, cloudTokenID, cloudTokenKey string, page int) (in *pb.CloudAPICall, size int) {
+func CloudAPICallForLoop(cloud, service, region, action, cloudTokenID, cloudTokenKey, nextToken string, page int) (out *pb.CloudAPICall, size int) {
+	in := &pb.CloudAPICall{}
 	in.Cloud = cloud
 	in.Service = service
 	in.Region = region
@@ -242,13 +246,18 @@ func CloudAPICallForLoop(cloud, service, region, action, cloudTokenID, cloudToke
 		size = 100
 		in.Params["Limit"] = public.Int2String(size)
 		in.Params["Offset"] = public.Int2String(page * size)
-		return in, size
 	case "aliyun":
 		size = 100
 		in.Params["PageNumber"] = public.Int2String(page)
 		in.Params["PageSize"] = public.Int2String(size)
-		return in, size
+	case "aws":
+		size = 100
+		in.Params["MaxResults"] = public.Int2String(size)
+		if nextToken != "" {
+			in.Params["NextToken"] = nextToken
+		}
 	default:
 		return &pb.CloudAPICall{}, size
 	}
+	return in, size
 }
