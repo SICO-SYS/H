@@ -9,25 +9,38 @@ Email:    sinerwr@gmail.com
 package controller
 
 import (
-	"github.com/getsentry/raven-go"
-
-	"github.com/SiCo-Ops/cfg"
+	"github.com/SiCo-Ops/cfg/v2"
+	"github.com/SiCo-Ops/dao/redis"
 )
 
 var (
-	config  = cfg.Config
-	RPCAddr = map[string]string{
-		"He": "He.SiCo" + config.RPCPort.He,
-		"Li": "Li.SiCo" + config.RPCPort.Li,
-		"Be": "Be.SiCo" + config.RPCPort.Be,
-		"B":  "B.SiCo" + config.RPCPort.B,
-		"C":  "C.SiCo" + config.RPCPort.C,
-		"N":  "N.SiCo" + config.RPCPort.N,
-	}
+	config     cfg.ConfigItems
+	configPool = redis.Pool("", "", "")
+	publicPool = redis.Pool("", "", "")
+	RPCAddr    map[string]string
 )
 
 func init() {
-	if config.Sentry.Enable {
-		raven.SetDSN(config.Sentry.DSN)
+	data := cfg.ReadLocalFile()
+
+	if data != nil {
+		cfg.Unmarshal(data, &config)
+	}
+
+	configPool = redis.Pool(config.RedisConfigHost, config.RedisConfigPort, config.RedisConfigAuth)
+	configs, _ := redis.Hgetall(configPool, "system.config")
+	cfg.Map2struct(configs, &config)
+	publicPool = redis.Pool(config.RedisPublicHost, config.RedisPublicPort, config.RedisPublicAuth)
+
+	RPCAddr = map[string]string{
+		"He": config.RpcHeHost + config.RpcHePort,
+		"Li": config.RpcLiHost + config.RpcLiPort,
+		"Be": config.RpcBeHost + config.RpcBePort,
+		"B":  config.RpcBHost + config.RpcBPort,
+		"C":  config.RpcCHost + config.RpcCPort,
+		"N":  config.RpcNHost + config.RpcNPort,
+		"O":  config.RpcOHost + config.RpcOPort,
+		"F":  config.RpcFHost + config.RpcFPort,
+		"Ne": config.RpcNeHost + config.RpcNePort,
 	}
 }

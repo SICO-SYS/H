@@ -77,7 +77,7 @@ func CloudTokenRegistry(rw http.ResponseWriter, req *http.Request) {
 		httpResponse("json", rw, rsp)
 		return
 	}
-	if config.AAAEnable && !AAAValidateToken(v.PrivateToken.ID, v.PrivateToken.Signature) {
+	if config.AAAstatus == "active" && !AAAValidateToken(v.PrivateToken.ID, v.PrivateToken.Signature) {
 		rsp, _ := json.Marshal(ResponseErrmsg(1))
 		httpResponse("json", rw, rsp)
 		return

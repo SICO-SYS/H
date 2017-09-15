@@ -39,7 +39,7 @@ func AssetCreateTemplate(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 	in := &pb.AssetTemplateCall{}
-	if config.AAAEnable && !AAAValidateToken(v.PrivateToken.ID, v.PrivateToken.Signature) {
+	if config.AAAstatus == "active" && !AAAValidateToken(v.PrivateToken.ID, v.PrivateToken.Signature) {
 		rsp, _ := json.Marshal(ResponseErrmsg(1))
 		httprsp(rw, rsp)
 		return
@@ -91,7 +91,7 @@ func AssetSynchronize(rw http.ResponseWriter, req *http.Request) {
 	v := &AssetSynchronizeRequest{}
 	json.Unmarshal(data, v)
 
-	if config.AAAEnable && !AAAValidateToken(v.PrivateToken.ID, v.PrivateToken.Signature) {
+	if config.AAAstatus == "active" && !AAAValidateToken(v.PrivateToken.ID, v.PrivateToken.Signature) {
 		rsp, _ := json.Marshal(ResponseErrmsg(1))
 		httprsp(rw, rsp)
 		return
