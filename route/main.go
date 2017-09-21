@@ -23,4 +23,5 @@ func init() {
 	AAA()
 	Cloud()
 	Asset()
+	Config()
 }
