@@ -10,7 +10,6 @@ package controller
 
 import (
 	"encoding/json"
-	"fmt"
 	"github.com/getsentry/raven-go"
 	"golang.org/x/net/context"
 	"net/http"
@@ -35,32 +34,34 @@ type configPullResponse struct {
 	Params configResponse `json:"params"`
 }
 
-func configPushRPC(in *pb.ConfigPushCall) *pb.ConfigPushBack {
+// B ConfigService PushRPC
+func ConfigPushRPC(in *pb.ConfigPushCall) *pb.ConfigPushBack {
 	defer func() {
 		recover()
 	}()
 	cc := rpc.RPCConn(RPCAddr["B"])
 	c := pb.NewConfigServiceClient(cc)
-	res, err := c.PushRPC(context.Background(), in)
+	r, err := c.PushRPC(context.Background(), in)
 	if err != nil {
 		raven.CaptureError(err, nil)
-		return &pb.ConfigPushBack{Code: 1}
+		return &pb.ConfigPushBack{Code: 304}
 	}
-	return res
+	return r
 }
 
-func configPullRPC(in *pb.ConfigPullCall) *pb.ConfigPullBack {
+// B ConfigService PullRPC
+func ConfigPullRPC(in *pb.ConfigPullCall) *pb.ConfigPullBack {
 	defer func() {
 		recover()
 	}()
 	cc := rpc.RPCConn(RPCAddr["B"])
 	c := pb.NewConfigServiceClient(cc)
-	res, err := c.PullRPC(context.Background(), in)
+	r, err := c.PullRPC(context.Background(), in)
 	if err != nil {
 		raven.CaptureError(err, nil)
-		return &pb.ConfigPullBack{Code: 1}
+		return &pb.ConfigPullBack{Code: 304}
 	}
-	return res
+	return r
 }
 
 func ConfigPull(rw http.ResponseWriter, req *http.Request) {
@@ -68,24 +69,27 @@ func ConfigPull(rw http.ResponseWriter, req *http.Request) {
 	queryString := req.URL.Query()
 	id := queryString.Get("id")
 	signature := queryString.Get("signature")
-	if config.AAAstatus == "active" {
-		if !AAAValidateToken(id, signature) {
-			rsp, _ := json.Marshal(ResponseErrmsg(1))
-			httpResponse("json", rw, rsp)
-			return
-		}
+
+	isPrivateTokenValid, errcode := AAAValidateToken(id, signature)
+	if errcode != 0 {
+		httpResponse("json", rw, responseErrMsg(errcode))
+		return
 	}
+	if !isPrivateTokenValid {
+		httpResponse("json", rw, responseErrMsg(1000))
+		return
+	}
+
 	in.Id = id
 	in.Environment = getRouteName(req, "environment")
-	res := configPullRPC(in)
-	if res.Code == 1 {
-		rsp, _ := json.Marshal(ResponseErrmsg(2))
-		httpResponse("json", rw, rsp)
+	r := ConfigPullRPC(in)
+	if r.Code != 0 {
+		httpResponse("json", rw, responseErrMsg(r.Code))
 		return
 	}
 	v := configResponse{}
-	json.Unmarshal(res.Params, &v)
-	rsp, _ := json.Marshal(&configPullResponse{Code: res.Code, Params: v})
+	json.Unmarshal(r.Params, &v)
+	rsp, _ := json.Marshal(&responseData{Code: r.Code, Data: v})
 	httpResponse("json", rw, rsp)
 	return
 }
@@ -101,25 +105,26 @@ func ConfigPush(rw http.ResponseWriter, req *http.Request) {
 	}
 	id := v.PrivateToken.ID
 	signature := v.PrivateToken.Signature
-	if config.AAAstatus == "active" {
-		if !AAAValidateToken(id, signature) {
-			rsp, _ := json.Marshal(ResponseErrmsg(1))
-			httpResponse("json", rw, rsp)
-			return
-		}
+
+	isPrivateTokenValid, errcode := AAAValidateToken(id, signature)
+	if errcode != 0 {
+		httpResponse("json", rw, responseErrMsg(errcode))
+		return
 	}
+	if !isPrivateTokenValid {
+		httpResponse("json", rw, responseErrMsg(1000))
+		return
+	}
+
 	in.Id = id
 	in.Environment = getRouteName(req, "environment")
 	params, _ := json.Marshal(v.Params)
 	in.Params = params
-	fmt.Println(v.Params)
-	res := configPushRPC(in)
-	if res.Code == 1 {
-		rsp, _ := json.Marshal(ResponseErrmsg(2))
-		httpResponse("json", rw, rsp)
+	r := ConfigPushRPC(in)
+	if r.Code != 0 {
+		httpResponse("json", rw, responseErrMsg(r.Code))
 		return
 	}
-	rsp, _ := json.Marshal(&configPushBack{Code: 0})
-	httpResponse("json", rw, rsp)
+	httpResponse("json", rw, responseSuccess())
 	return
 }

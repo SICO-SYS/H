@@ -16,7 +16,6 @@ import (
 
 	"github.com/SiCo-Ops/Pb"
 	"github.com/SiCo-Ops/dao/grpc"
-	"github.com/SiCo-Ops/public"
 )
 
 type AssetTemplate struct {
@@ -31,58 +30,86 @@ type AssetSynchronizeRequest struct {
 	Region         string              `json:"region"`
 }
 
-func AssetCreateTemplate(rw http.ResponseWriter, req *http.Request) {
-	v := AssetTemplate{}
-	if data, ok := ValidatePostData(rw, req); ok {
-		json.Unmarshal(data, &v)
-	} else {
-		return
-	}
-	in := &pb.AssetTemplateCall{}
-	if config.AAAstatus == "active" && !AAAValidateToken(v.PrivateToken.ID, v.PrivateToken.Signature) {
-		rsp, _ := json.Marshal(ResponseErrmsg(1))
-		httprsp(rw, rsp)
-		return
-	}
-	in.Id = v.PrivateToken.ID
-	in.Name = v.Name
-	in.Param = v.Param
+// Be TemplateService CreateRPC
+func AssetTemplateCreateRPC(in *pb.AssetTemplateCall) *pb.AssetTemplateBack {
+	defer func() {
+		recover()
+	}()
 	cc := rpc.RPCConn(RPCAddr["Be"])
 	defer cc.Close()
 	c := pb.NewTemplateServiceClient(cc)
-	res, err := c.CreateRPC(context.Background(), in)
+	r, err := c.CreateRPC(context.Background(), in)
 	if err != nil {
 		raven.CaptureError(err, nil)
+		return &pb.AssetTemplateBack{Code: 303}
 	}
-	if res.Code == 0 {
-		rsp, _ := json.Marshal(&ResponseData{0, "Success add template"})
-		httprsp(rw, rsp)
-		return
-	}
-	rsp, _ := json.Marshal(res)
-	httprsp(rw, rsp)
-	return
+	return r
 }
 
-func AssetSynchronizeRPC(in *pb.AssetSynchronizeCall) *pb.AssetMsgBack {
+// Be AssetService SynchronizeRPC
+func AssetSynchronizeRPC(in *pb.AssetSynchronizeCall) *pb.AssetSynchronizeBack {
 	defer func() {
 		recover()
 	}()
 	cc := rpc.RPCConn(RPCAddr["Be"])
 	defer cc.Close()
 	c := pb.NewAssetServiceClient(cc)
-	res, err := c.SynchronizeRPC(context.Background(), in)
+	r, err := c.SynchronizeRPC(context.Background(), in)
 	if err != nil {
 		raven.CaptureError(err, nil)
-		return &pb.AssetMsgBack{Code: -1, Msg: ""}
+		return &pb.AssetSynchronizeBack{Code: 303}
 	}
-	return res
+	return r
 }
 
-func AssetSynchronize(rw http.ResponseWriter, req *http.Request) {
+// Be AssetService CustomRPC
+func AssetCustomRPC(in *pb.AssetCustomizeCall) *pb.AssetCustomizeBack {
 	defer func() {
 		recover()
 	}()
+	cc := rpc.RPCConn(RPCAddr["Be"])
+	defer cc.Close()
+	c := pb.NewAssetServiceClient(cc)
+	r, err := c.CustomRPC(context.Background(), in)
+	if err != nil {
+		raven.CaptureError(err, nil)
+		return &pb.AssetCustomizeBack{Code: 303}
+	}
+	return r
+}
+
+func AssetCreateTemplate(rw http.ResponseWriter, req *http.Request) {
+	data, ok := ValidatePostData(rw, req)
+	if !ok {
+		return
+	}
+	v := AssetTemplate{}
+	json.Unmarshal(data, &v)
+
+	isPrivateTokenValid, errcode := AAAValidateToken(v.PrivateToken.ID, v.PrivateToken.Signature)
+	if errcode != 0 {
+		httpResponse("json", rw, responseErrMsg(errcode))
+		return
+	}
+	if config.AAAstatus == "active" && !isPrivateTokenValid {
+		httpResponse("json", rw, responseErrMsg(1000))
+		return
+	}
+
+	in := &pb.AssetTemplateCall{}
+	in.Id = v.PrivateToken.ID
+	in.Name = v.Name
+	in.Params, _ = json.Marshal(v.Param)
+	r := AssetTemplateCreateRPC(in)
+	if r.Code != 0 {
+		httpResponse("json", rw, responseErrMsg(r.Code))
+		return
+	}
+	httpResponse("json", rw, responseSuccess())
+	return
+}
+
+func AssetSynchronize(rw http.ResponseWriter, req *http.Request) {
 	data, ok := ValidatePostData(rw, req)
 	if !ok {
 		return
@@ -91,59 +118,54 @@ func AssetSynchronize(rw http.ResponseWriter, req *http.Request) {
 	v := &AssetSynchronizeRequest{}
 	json.Unmarshal(data, v)
 
-	if config.AAAstatus == "active" && !AAAValidateToken(v.PrivateToken.ID, v.PrivateToken.Signature) {
-		rsp, _ := json.Marshal(ResponseErrmsg(1))
-		httprsp(rw, rsp)
+	isPrivateTokenValid, errcode := AAAValidateToken(v.PrivateToken.ID, v.PrivateToken.Signature)
+	if errcode != 0 {
+		httpResponse("json", rw, responseErrMsg(errcode))
+		return
+	}
+	if config.AAAstatus == "active" && !isPrivateTokenValid {
+		httpResponse("json", rw, responseErrMsg(1000))
 		return
 	}
 
 	cloud := getRouteName(req, "cloud")
 	service := getRouteName(req, "service")
-	action, ok := actionMap(cloud, service, "DescribeInstances")
-	if !ok {
-		rsp, _ := json.Marshal(ResponseErrmsg(29))
-		httprsp(rw, rsp)
+	region := v.Region
+	action, errcode := getActionMap(cloud, service, "DescribeInstances")
+	if errcode != 0 {
+		httpResponse("json", rw, responseErrMsg(errcode))
 		return
 	}
 
-	cloudTokenID, cloudTokenKey = CloudTokenGet(v.PrivateToken.ID, cloud, v.CloudTokenName)
+	cloudTokenID, cloudTokenKey, errcode := cloudTokenGet(v.PrivateToken.ID, cloud, v.CloudTokenName)
+	if errcode != 0 {
+		httpResponse("json", rw, responseErrMsg(errcode))
+		return
+	}
 
-	var moreSource bool = true
+	in := &pb.CloudAPICall{Cloud: cloud, Service: service, Region: region, Action: action, CloudId: cloudTokenID, CloudKey: cloudTokenKey}
 	var nextToken string = ""
-	for i := 0; moreSource; i++ {
-		in, size := CloudAPICallForLoop(cloud, service, v.Region, action, cloudTokenID, cloudTokenKey, nextToken, i)
-		res := CloudAPIRPC(in)
-		assetResponse := AssetSynchronizeRPC(&pb.AssetSynchronizeCall{Id: v.PrivateToken.ID, Cloud: cloud, Service: service, Data: res.Data})
-		switch assetResponse.Code {
-		case -1:
-			rsp, _ := json.Marshal(ResponseErrmsg(21))
-			httpResponse("json", rw, rsp)
-			moreSource = false
-			return
-		case 1:
-			// code = 1 , for AWS
-			if assetResponse.Msg != "" {
-				nextToken = assetResponse.Msg
-			} else {
-				moreSource = false
-			}
-		case 2:
-			// code = 2 , for Qcloud,Aliyun
-			totalCount := public.String2Float(assetResponse.Msg)
-			if public.Int2Float(i+1) >= totalCount/public.Int2Float(size) {
-				moreSource = false
-			}
-		default:
-			rsp, _ := json.Marshal(ResponseErrmsg(127))
-			httpResponse("json", rw, rsp)
-			moreSource = false
+	var totalCount int64 = 0
+	var page int64
+	for page = 0; true; page++ {
+		in, isLoop := CloudAPICallForLoop(in, nextToken, page, totalCount)
+		if !isLoop {
+			break
+		}
+		cloudResponse := CloudAPIRequestRPC(in)
+		if cloudResponse.Code != 0 {
+			httpResponse("json", rw, responseErrMsg(cloudResponse.Code))
 			return
 		}
 
+		assetResponse := AssetSynchronizeRPC(&pb.AssetSynchronizeCall{Id: v.PrivateToken.ID, Cloud: cloud, Service: service, Data: cloudResponse.Data})
+		if assetResponse.Code != 0 {
+			httpResponse("json", rw, responseErrMsg(assetResponse.Code))
+			return
+		}
+		nextToken = assetResponse.NextToken
+		totalCount = assetResponse.TotalCount
 	}
-	if !moreSource {
-		rsp, _ := json.Marshal(&ResponseData{Code: 0, Data: "success"})
-		httpResponse("json", rw, rsp)
-		return
-	}
+	httpResponse("json", rw, responseSuccess())
+	return
 }

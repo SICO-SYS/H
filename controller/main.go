@@ -9,14 +9,16 @@ Email:    sinerwr@gmail.com
 package controller
 
 import (
+	"log"
+
 	"github.com/SiCo-Ops/cfg/v2"
 	"github.com/SiCo-Ops/dao/redis"
 )
 
 var (
 	config     cfg.ConfigItems
-	configPool = redis.Pool("", "", "")
-	publicPool = redis.Pool("", "", "")
+	configPool = redis.NewPool()
+	publicPool = redis.NewPool()
 	RPCAddr    map[string]string
 )
 
@@ -27,10 +29,13 @@ func init() {
 		cfg.Unmarshal(data, &config)
 	}
 
-	configPool = redis.Pool(config.RedisConfigHost, config.RedisConfigPort, config.RedisConfigAuth)
-	configs, _ := redis.Hgetall(configPool, "system.config")
+	configPool = redis.InitPool(config.RedisConfigHost, config.RedisConfigPort, config.RedisConfigAuth)
+	configs, err := redis.Hgetall(configPool, "system.config")
+	if err != nil {
+		log.Fatalln(err)
+	}
 	cfg.Map2struct(configs, &config)
-	publicPool = redis.Pool(config.RedisPublicHost, config.RedisPublicPort, config.RedisPublicAuth)
+	publicPool = redis.InitPool(config.RedisPublicHost, config.RedisPublicPort, config.RedisPublicAuth)
 
 	RPCAddr = map[string]string{
 		"He": config.RpcHeHost + ":" + config.RpcHePort,

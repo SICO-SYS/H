@@ -23,29 +23,35 @@ type PublicToken struct {
 
 func PublicGenerateToken(rw http.ResponseWriter, req *http.Request) {
 	key := public.GenerateHexString()
-	err := redis.SetWithExpire(publicPool, key, config.PublicTokenStatus, public.String2Int(config.PublicTokenExpire))
-	rspdata := &ResponseData{}
+	if config.PublicTokenStatus != "active" {
+		httpResponse("json", rw, responseErrMsg(7))
+		return
+	}
+	err := redis.Set(publicPool, key, config.PublicTokenStatus, int64(public.StringToInt(config.PublicTokenExpire)))
 	if err != nil {
 		raven.CaptureError(err, nil)
-		rspdata = ResponseErrmsg(126)
-	} else {
-		rspdata = &ResponseData{0, &PublicToken{Token: key}}
+		httpResponse("json", rw, responseErrMsg(101))
+		return
 	}
-	rsp, _ := json.Marshal(rspdata)
-	httprsp(rw, rsp)
+	rsp, _ := json.Marshal(&responseData{0, &PublicToken{Token: key}})
+	httpResponse("json", rw, rsp)
+	return
 }
 
-func ValidateOpenToken(k string) bool {
-	data, err := redis.ExpiredAfterGetWithKey(publicPool, k)
+func PublicValidateToken(k string) (bool, int64) {
+	if config.PublicTokenStatus != "active" {
+		return false, 7
+	}
+	data, err := redis.ExpiredAfterGet(publicPool, k)
 	if err != nil {
-		return false
+		return false, 101
 	}
 	ok, err := redis.ValueIsString(data)
 	if err != nil {
-		return false
+		return false, 101
 	}
 	if ok != "active" {
-		return false
+		return false, 0
 	}
-	return true
+	return true, 0
 }
