@@ -11,8 +11,6 @@ package controller
 import (
 	"encoding/json"
 	"github.com/getsentry/raven-go"
-	"golang.org/x/net/context"
-	// "io/ioutil"
 	"net/http"
 
 	"github.com/SiCo-Ops/Pb"
@@ -51,54 +49,6 @@ type CloudAPIResponse struct {
 	Data string `json:"data"`
 }
 
-// Li APIservice RequestRPC
-func CloudAPIRequestRPC(in *pb.CloudAPICall) *pb.CloudAPIBack {
-	defer func() {
-		recover()
-	}()
-	cc := rpc.RPCConn(RPCAddr["Li"])
-	defer cc.Close()
-	c := pb.NewCloudAPIServiceClient(cc)
-	r, err := c.RequestRPC(context.Background(), in)
-	if err != nil {
-		raven.CaptureError(err, nil)
-		return &pb.CloudAPIBack{Code: 302}
-	}
-	return r
-}
-
-// Li TokenService SetRPC
-func CloudTokenSetRPC(in *pb.CloudTokenCall) *pb.CloudTokenBack {
-	defer func() {
-		recover()
-	}()
-	cc := rpc.RPCConn(RPCAddr["Li"])
-	defer cc.Close()
-	c := pb.NewCloudTokenServiceClient(cc)
-	r, err := c.SetRPC(context.Background(), in)
-	if err != nil {
-		raven.CaptureError(err, nil)
-		return &pb.CloudTokenBack{Code: 302}
-	}
-	return r
-}
-
-// Li TokenService GetRPC
-func CloudTokenGetRPC(in *pb.CloudTokenCall) *pb.CloudTokenBack {
-	defer func() {
-		recover()
-	}()
-	cc := rpc.RPCConn(RPCAddr["Li"])
-	defer cc.Close()
-	c := pb.NewCloudTokenServiceClient(cc)
-	r, err := c.GetRPC(context.Background(), in)
-	if err != nil {
-		raven.CaptureError(err, nil)
-		return &pb.CloudTokenBack{Code: 302}
-	}
-	return r
-}
-
 func CloudAPICallForLoop(in *pb.CloudAPICall, nextToken string, page, totalCount int64) (out *pb.CloudAPICall, isLoop bool) {
 	in.Params = make(map[string]string)
 	var requestCount int64 = 100
@@ -132,7 +82,12 @@ func cloudTokenGet(id string, cloud string, name string) (string, string, int64)
 	in.AAATokenID = id
 	in.Cloud = cloud
 	in.Name = name
-	r := CloudTokenGetRPC(in)
+	cc, err := rpc.Conn(config.RpcLiHost, config.RpcLiPort)
+	if err != nil {
+		raven.CaptureError(err, nil)
+		return "", "", 302
+	}
+	r := rpc.CloudTokenGetRPC(cc, in)
 	if r.Code != 0 {
 		return "", "", r.Code
 	}
@@ -187,7 +142,13 @@ func CloudTokenRegistry(rw http.ResponseWriter, req *http.Request) {
 	in.Id = v.ID
 	in.Key = v.Key
 	in.AAATokenID = v.PrivateToken.ID
-	r := CloudTokenSetRPC(in)
+	cc, err := rpc.Conn(config.RpcLiHost, config.RpcLiPort)
+	if err != nil {
+		raven.CaptureError(err, nil)
+		httpResponse("json", rw, responseErrMsg(302))
+		return
+	}
+	r := rpc.CloudTokenSetRPC(cc, in)
 	if r.Code != 0 {
 		httpResponse("json", rw, responseErrMsg(r.Code))
 		return
@@ -226,7 +187,13 @@ func CloudAPICall(rw http.ResponseWriter, req *http.Request) {
 
 	in := &pb.CloudAPICall{Cloud: cloud, Service: service, Action: action, Region: v.Region, CloudId: cloudTokenID, CloudKey: cloudTokenKey}
 	in.Params = v.Param
-	r := CloudAPIRequestRPC(in)
+	cc, err := rpc.Conn(config.RpcLiHost, config.RpcLiPort)
+	if err != nil {
+		raven.CaptureError(err, nil)
+		httpResponse("json", rw, responseErrMsg(302))
+		return
+	}
+	r := rpc.CloudAPIRequestRPC(cc, in)
 	if r.Code != 0 {
 		httpResponse("json", rw, responseErrMsg(r.Code))
 		return
@@ -260,7 +227,12 @@ func CloudAPICallRaw(rw http.ResponseWriter, req *http.Request) {
 
 	in := &pb.CloudAPICall{Cloud: cloud, Service: service, Action: v.Action, Region: v.Region, CloudId: v.CloudTokenID, CloudKey: v.CloudTokenKey}
 	in.Params = v.Param
-	r := CloudAPIRequestRPC(in)
+	cc, err := rpc.Conn(config.RpcLiHost, config.RpcLiPort)
+	if err != nil {
+		raven.CaptureError(err, nil)
+
+	}
+	r := rpc.CloudAPIRequestRPC(cc, in)
 	if r.Code != 0 {
 		httpResponse("json", rw, responseErrMsg(r.Code))
 		return

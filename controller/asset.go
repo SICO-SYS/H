@@ -11,7 +11,6 @@ package controller
 import (
 	"encoding/json"
 	"github.com/getsentry/raven-go"
-	"golang.org/x/net/context"
 	"net/http"
 
 	"github.com/SiCo-Ops/Pb"
@@ -28,54 +27,6 @@ type AssetSynchronizeRequest struct {
 	PrivateToken   AuthenticationToken `json:"token"`
 	CloudTokenName string              `json:"name"`
 	Region         string              `json:"region"`
-}
-
-// Be TemplateService CreateRPC
-func AssetTemplateCreateRPC(in *pb.AssetTemplateCall) *pb.AssetTemplateBack {
-	defer func() {
-		recover()
-	}()
-	cc := rpc.RPCConn(RPCAddr["Be"])
-	defer cc.Close()
-	c := pb.NewTemplateServiceClient(cc)
-	r, err := c.CreateRPC(context.Background(), in)
-	if err != nil {
-		raven.CaptureError(err, nil)
-		return &pb.AssetTemplateBack{Code: 303}
-	}
-	return r
-}
-
-// Be AssetService SynchronizeRPC
-func AssetSynchronizeRPC(in *pb.AssetSynchronizeCall) *pb.AssetSynchronizeBack {
-	defer func() {
-		recover()
-	}()
-	cc := rpc.RPCConn(RPCAddr["Be"])
-	defer cc.Close()
-	c := pb.NewAssetServiceClient(cc)
-	r, err := c.SynchronizeRPC(context.Background(), in)
-	if err != nil {
-		raven.CaptureError(err, nil)
-		return &pb.AssetSynchronizeBack{Code: 303}
-	}
-	return r
-}
-
-// Be AssetService CustomRPC
-func AssetCustomRPC(in *pb.AssetCustomizeCall) *pb.AssetCustomizeBack {
-	defer func() {
-		recover()
-	}()
-	cc := rpc.RPCConn(RPCAddr["Be"])
-	defer cc.Close()
-	c := pb.NewAssetServiceClient(cc)
-	r, err := c.CustomRPC(context.Background(), in)
-	if err != nil {
-		raven.CaptureError(err, nil)
-		return &pb.AssetCustomizeBack{Code: 303}
-	}
-	return r
 }
 
 func AssetCreateTemplate(rw http.ResponseWriter, req *http.Request) {
@@ -100,7 +51,13 @@ func AssetCreateTemplate(rw http.ResponseWriter, req *http.Request) {
 	in.Id = v.PrivateToken.ID
 	in.Name = v.Name
 	in.Params, _ = json.Marshal(v.Param)
-	r := AssetTemplateCreateRPC(in)
+	cc, err := rpc.Conn(config.RpcBeHost, config.RpcBePort)
+	if err != nil {
+		raven.CaptureError(err, nil)
+		httpResponse("json", rw, responseErrMsg(303))
+		return
+	}
+	r := rpc.TemplateCreateRPC(cc, in)
 	if r.Code != 0 {
 		httpResponse("json", rw, responseErrMsg(r.Code))
 		return
@@ -152,13 +109,24 @@ func AssetSynchronize(rw http.ResponseWriter, req *http.Request) {
 		if !isLoop {
 			break
 		}
-		cloudResponse := CloudAPIRequestRPC(in)
+		cloudcc, clouderr := rpc.Conn(config.RpcLiHost, config.RpcLiPort)
+		if clouderr != nil {
+			raven.CaptureError(clouderr, nil)
+			httpResponse("json", rw, responseErrMsg(302))
+			return
+		}
+		cloudResponse := rpc.CloudAPIRequestRPC(cloudcc, in)
 		if cloudResponse.Code != 0 {
 			httpResponse("json", rw, responseErrMsg(cloudResponse.Code))
 			return
 		}
-
-		assetResponse := AssetSynchronizeRPC(&pb.AssetSynchronizeCall{Id: v.PrivateToken.ID, Cloud: cloud, Service: service, Data: cloudResponse.Data})
+		assetcc, asseterr := rpc.Conn(config.RpcBeHost, config.RpcBePort)
+		if asseterr != nil {
+			raven.CaptureError(asseterr, nil)
+			httpResponse("json", rw, responseErrMsg(303))
+			return
+		}
+		assetResponse := rpc.AssetSynchronizeRPC(assetcc, &pb.AssetSynchronizeCall{Id: v.PrivateToken.ID, Cloud: cloud, Service: service, Data: cloudResponse.Data})
 		if assetResponse.Code != 0 {
 			httpResponse("json", rw, responseErrMsg(assetResponse.Code))
 			return

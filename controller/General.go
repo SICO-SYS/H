@@ -20,7 +20,7 @@ var (
 )
 
 func PublicCfgVersion(rw http.ResponseWriter, req *http.Request) {
-	rsp, _ := json.Marshal(&responseData{0, "[Success]" + config.Version})
+	rsp, _ := json.Marshal(&responseData{Code: 0, Data: "[Success] " + config.Version})
 	httpResponse("json", rw, rsp)
 }
 

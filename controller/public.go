@@ -33,7 +33,7 @@ func PublicGenerateToken(rw http.ResponseWriter, req *http.Request) {
 		httpResponse("json", rw, responseErrMsg(101))
 		return
 	}
-	rsp, _ := json.Marshal(&responseData{0, &PublicToken{Token: key}})
+	rsp, _ := json.Marshal(&responseData{Code: 0, Data: &PublicToken{Token: key}})
 	httpResponse("json", rw, rsp)
 	return
 }

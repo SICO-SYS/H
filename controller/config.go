@@ -11,7 +11,6 @@ package controller
 import (
 	"encoding/json"
 	"github.com/getsentry/raven-go"
-	"golang.org/x/net/context"
 	"net/http"
 
 	"github.com/SiCo-Ops/Pb"
@@ -34,36 +33,6 @@ type configPullResponse struct {
 	Params configResponse `json:"params"`
 }
 
-// B ConfigService PushRPC
-func ConfigPushRPC(in *pb.ConfigPushCall) *pb.ConfigPushBack {
-	defer func() {
-		recover()
-	}()
-	cc := rpc.RPCConn(RPCAddr["B"])
-	c := pb.NewConfigServiceClient(cc)
-	r, err := c.PushRPC(context.Background(), in)
-	if err != nil {
-		raven.CaptureError(err, nil)
-		return &pb.ConfigPushBack{Code: 304}
-	}
-	return r
-}
-
-// B ConfigService PullRPC
-func ConfigPullRPC(in *pb.ConfigPullCall) *pb.ConfigPullBack {
-	defer func() {
-		recover()
-	}()
-	cc := rpc.RPCConn(RPCAddr["B"])
-	c := pb.NewConfigServiceClient(cc)
-	r, err := c.PullRPC(context.Background(), in)
-	if err != nil {
-		raven.CaptureError(err, nil)
-		return &pb.ConfigPullBack{Code: 304}
-	}
-	return r
-}
-
 func ConfigPull(rw http.ResponseWriter, req *http.Request) {
 	in := &pb.ConfigPullCall{}
 	queryString := req.URL.Query()
@@ -82,7 +51,13 @@ func ConfigPull(rw http.ResponseWriter, req *http.Request) {
 
 	in.Id = id
 	in.Environment = getRouteName(req, "environment")
-	r := ConfigPullRPC(in)
+	cc, err := rpc.Conn(config.RpcBHost, config.RpcBPort)
+	if err != nil {
+		raven.CaptureError(err, nil)
+		httpResponse("json", rw, responseErrMsg(304))
+		return
+	}
+	r := rpc.ConfigPullRPC(cc, in)
 	if r.Code != 0 {
 		httpResponse("json", rw, responseErrMsg(r.Code))
 		return
@@ -120,7 +95,13 @@ func ConfigPush(rw http.ResponseWriter, req *http.Request) {
 	in.Environment = getRouteName(req, "environment")
 	params, _ := json.Marshal(v.Params)
 	in.Params = params
-	r := ConfigPushRPC(in)
+	cc, err := rpc.Conn(config.RpcBHost, config.RpcBPort)
+	if err != nil {
+		raven.CaptureError(err, nil)
+		httpResponse("json", rw, responseErrMsg(304))
+		return
+	}
+	r := rpc.ConfigPushRPC(cc, in)
 	if r.Code != 0 {
 		httpResponse("json", rw, responseErrMsg(r.Code))
 		return

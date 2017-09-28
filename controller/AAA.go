@@ -11,7 +11,6 @@ package controller
 import (
 	"encoding/json"
 	"github.com/getsentry/raven-go"
-	"golang.org/x/net/context"
 	"net/http"
 
 	"github.com/SiCo-Ops/Pb"
@@ -35,77 +34,17 @@ type TokenRegInfo struct {
 	Phone string `json:"phone"`
 }
 
-// He PublicService GenerateTokenRPC
-func AAAPublicGenerateTokenRPC(in *pb.AAAGenerateTokenCall) *pb.AAAGenerateTokenBack {
-	defer func() {
-		recover()
-	}()
-	cc := rpc.RPCConn(RPCAddr["He"])
-	defer cc.Close()
-	c := pb.NewAAAPublicServiceClient(cc)
-	r, err := c.GenerateTokenRPC(context.Background(), in)
-	if err != nil {
-		raven.CaptureError(err, nil)
-		return &pb.AAAGenerateTokenBack{Code: 301}
-	}
-	return r
-}
-
-// He PrivateService AuthenticationRPC
-func AAAPrivateAuthenticationRPC(in *pb.AAATokenCall) *pb.AAATokenBack {
-	defer func() {
-		recover()
-	}()
-	cc := rpc.RPCConn(RPCAddr["He"])
-	defer cc.Close()
-	c := pb.NewAAAPrivateServiceClient(cc)
-	r, err := c.AuthenticationRPC(context.Background(), in)
-	if err != nil {
-		raven.CaptureError(err, nil)
-		return &pb.AAATokenBack{Code: 301}
-	}
-	return r
-}
-
-// He PrivateService AuthorizationRPC
-func AAAPrivateAuthorizationRPC(in *pb.AAAServiceCall) *pb.AAAServiceBack {
-	defer func() {
-		recover()
-	}()
-	cc := rpc.RPCConn(RPCAddr["He"])
-	defer cc.Close()
-	c := pb.NewAAAPrivateServiceClient(cc)
-	r, err := c.AuthorizationRPC(context.Background(), in)
-	if err != nil {
-		raven.CaptureError(err, nil)
-		return &pb.AAAServiceBack{Code: 301}
-	}
-	return r
-}
-
-// He PrivateService AuthorizationRPC
-func AAAPrivateAccountingRPC(in *pb.AAAEventCall) *pb.AAAEventBack {
-	defer func() {
-		recover()
-	}()
-	cc := rpc.RPCConn(RPCAddr["He"])
-	defer cc.Close()
-	c := pb.NewAAAPrivateServiceClient(cc)
-	r, err := c.AccountingRPC(context.Background(), in)
-	if err != nil {
-		raven.CaptureError(err, nil)
-		return &pb.AAAEventBack{Code: 301}
-	}
-	return r
-
-}
-
 // return the sinature is valid
 func AAAValidateToken(id string, signature string) (bool, int64) {
 	in := &pb.AAATokenCall{}
 	in.Id = id
 	in.Signature = signature
-	r := AAAPrivateAuthenticationRPC(in)
+	cc, err := rpc.Conn(config.RpcHeHost, config.RpcHePort)
+	if err != nil {
+		raven.CaptureError(err, nil)
+		return false, 301
+	}
+	r := rpc.AAATokenAuthenticationRPC(cc, in)
 	if r.Code != 0 {
 		return false, r.Code
 	}
@@ -138,7 +77,13 @@ func AAAGenerateToken(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 	in := &pb.AAAGenerateTokenCall{Email: v.Email, Phone: v.Phone}
-	r := AAAPublicGenerateTokenRPC(in)
+	cc, err := rpc.Conn(config.RpcHeHost, config.RpcHePort)
+	if err != nil {
+		raven.CaptureError(err, nil)
+		httpResponse("json", rw, responseErrMsg(301))
+		return
+	}
+	r := rpc.AAATokenGenerateRPC(cc, in)
 	if r.Code != 0 {
 		httpResponse("json", rw, responseErrMsg(r.Code))
 		return

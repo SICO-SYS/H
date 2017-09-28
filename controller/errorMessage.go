@@ -113,6 +113,6 @@ func responseErrMsg(errcode int64) []byte {
 }
 
 func responseSuccess() []byte {
-	rsp, _ := json.Marshal(&responseData{0, "Success"})
+	rsp, _ := json.Marshal(&responseData{Code: 0, Data: "Success"})
 	return rsp
 }
