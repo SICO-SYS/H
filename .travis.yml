@@ -1,8 +1,6 @@
 language: go
 go:
 - 1.8.x
-before_install:
-- cp config.sample.json config.json
 install:
   - go get github.com/SiCo-Ops/H
 notifications:

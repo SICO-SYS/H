@@ -11,41 +11,29 @@ package controller
 import (
 	"log"
 
-	"github.com/SiCo-Ops/cfg/v2"
+	"github.com/SiCo-Ops/cfg"
 	"github.com/SiCo-Ops/dao/redis"
+)
+
+const (
+	configPath string = "config.json"
 )
 
 var (
 	config     cfg.ConfigItems
-	configPool = redis.NewPool()
 	publicPool = redis.NewPool()
-	RPCAddr    map[string]string
 )
 
 func init() {
-	data := cfg.ReadLocalFile()
-
-	if data != nil {
-		cfg.Unmarshal(data, &config)
-	}
-
-	configPool = redis.InitPool(config.RedisConfigHost, config.RedisConfigPort, config.RedisConfigAuth)
-	configs, err := redis.Hgetall(configPool, "system.config")
+	data, err := cfg.ReadFilePath(configPath)
 	if err != nil {
-		log.Fatalln(err)
+		data = cfg.ReadConfigServer()
+		if data == nil {
+			log.Fatalln("config.json not exist and configserver was down")
+		}
 	}
-	cfg.Map2struct(configs, &config)
+	cfg.Unmarshal(data, &config)
+
 	publicPool = redis.InitPool(config.RedisPublicHost, config.RedisPublicPort, config.RedisPublicAuth)
 
-	RPCAddr = map[string]string{
-		"He": config.RpcHeHost + ":" + config.RpcHePort,
-		"Li": config.RpcLiHost + ":" + config.RpcLiPort,
-		"Be": config.RpcBeHost + ":" + config.RpcBePort,
-		"B":  config.RpcBHost + ":" + config.RpcBPort,
-		"C":  config.RpcCHost + ":" + config.RpcCPort,
-		"N":  config.RpcNHost + ":" + config.RpcNPort,
-		"O":  config.RpcOHost + ":" + config.RpcOPort,
-		"F":  config.RpcFHost + ":" + config.RpcFPort,
-		"Ne": config.RpcNeHost + ":" + config.RpcNePort,
-	}
 }
