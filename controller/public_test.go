@@ -7,7 +7,7 @@ import (
 	"github.com/SiCo-Ops/public"
 )
 
-func TestPublicGenerateToken(t *testing.T) {
+func Test_PublicGenerateToken(t *testing.T) {
 	key := public.GenerateHexString()
 	err := redis.Set(publicPool, key, config.PublicTokenStatus, int64(public.StringToInt(config.PublicTokenExpire)))
 	if err != nil {
@@ -15,7 +15,7 @@ func TestPublicGenerateToken(t *testing.T) {
 	}
 }
 
-func BenchmarkPublicGenerateToken(b *testing.B) {
+func Benchmark_PublicGenerateToken(b *testing.B) {
 	b.StopTimer()
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
@@ -27,7 +27,7 @@ func BenchmarkPublicGenerateToken(b *testing.B) {
 	}
 }
 
-func TestPublicValidateToken(t *testing.T) {
+func Test_PublicValidateToken(t *testing.T) {
 	key := public.GenerateHexString()
 	_, code := PublicValidateToken(key)
 	if code != 0 {
@@ -35,7 +35,7 @@ func TestPublicValidateToken(t *testing.T) {
 	}
 }
 
-func BenchmarkPublicValidateToken(b *testing.B) {
+func Benchmark_PublicValidateToken(b *testing.B) {
 	b.StopTimer()
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
