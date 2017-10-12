@@ -83,6 +83,8 @@ func errorMessage(errcode int64) string {
 		errmsg = "[AAA] Missing email or phone"
 	case 1004:
 		errmsg = "[AAA] Generate token retry more than 5 times, already report event automatically"
+	case 1005:
+		errmsg = "[AAA] Token not found"
 	case 1999:
 		errmsg = "[AAA] unknown error"
 	//2000 - 2999 Cloud problem

@@ -3,10 +3,8 @@ go:
 - 1.8.x
 services:
   - redis-server
-  - mongodb
 before_install:
-  - cp config.travis.json controller/config.json
-  - cp config.travis.json route/config.json
+  - wget https://s3.amazonaws.com/sico-ops/config.travis.json -O controller/config.json
 install:
   - go get -t ./...
 script: go test -test.bench=".*" -v ./...
