@@ -32,29 +32,28 @@ func WechatValidateServer(rw http.ResponseWriter, req *http.Request) {
 }
 
 func WechatReceiveMessage(rw http.ResponseWriter, req *http.Request) {
-	// token := config.WechatToken
-	// nonce, timestamp, signature := wechat.GetValidation(req)
-	// isValid := wechat.ValidateServer(token, nonce, timestamp, signature)
-	// if !isValid {
-	// 	httpResponse("json", rw, responseErrMsg(10))
-	// 	return
-	// }
+	token := config.WechatToken
+	nonce, timestamp, signature := wechat.GetValidation(req)
+	isValid := wechat.ValidateServer(token, nonce, timestamp, signature)
+	if !isValid {
+		httpResponse("json", rw, responseErrMsg(10))
+		return
+	}
 	data, _ := ioutil.ReadAll(req.Body)
 	v := wechat.Parse(data)
 	var (
 		msgtype string
 		content string
 	)
-	log.Println(req.URL.RequestURI())
-	log.Println(v.MsgType)
-	log.Println(v.CreateTime)
 	if v.MsgType == "event" && v.Event == "subscribe" {
 		msgtype = "text"
-		content = "Welcome to use SiCo \n Type #signup to registry \n Type #Signin TOKENIN SIGNATURE to bind an exist token"
+		content = "Welcome to use SiCo \nType ? for help"
 	}
 	if v.MsgType == "text" {
 		// msgtype = "text"
 		command := strings.Split(v.Content, " ")
+		log.Println(command)
+		log.Println(command[0])
 		switch command[0] {
 		case "?":
 			content = "Type #signup to registry \n Type #Signin TOKENIN SIGNATURE to bind an exist token"
