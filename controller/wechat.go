@@ -45,9 +45,11 @@ func WechatReceiveMessage(rw http.ResponseWriter, req *http.Request) {
 		content string
 	)
 	if v.MsgType == "event" && v.Event == "subscribe" {
+		msgtype = "text"
 		content = "Welcome to use SiCo \n Type #signup to registry \n Type #Signin TOKENIN SIGNATURE to bind an exist token"
 	}
 	if v.MsgType == "text" {
+		// msgtype = "text"
 		command := strings.Split(v.Content, " ")
 		switch command[0] {
 		case "?":
