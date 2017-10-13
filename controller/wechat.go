@@ -20,7 +20,8 @@ import (
 func WechatValidateServer(rw http.ResponseWriter, req *http.Request) {
 	echostr := req.URL.Query().Get("echostr")
 	token := config.WechatToken
-	isValid := wechat.ValidateServer(wechat.GetValidation(token, req))
+	nonce, timestamp, signature := wechat.GetValidation(req)
+	isValid := wechat.ValidateServer(token, nonce, timestamp, signature)
 	if !isValid {
 		httpResponse("json", rw, responseErrMsg(10))
 		return
@@ -30,12 +31,13 @@ func WechatValidateServer(rw http.ResponseWriter, req *http.Request) {
 }
 
 func WechatReceiveMessage(rw http.ResponseWriter, req *http.Request) {
-	token := config.WechatToken
-	isValid := wechat.ValidateServer(wechat.GetValidation(token, req))
-	if !isValid {
-		httpResponse("json", rw, responseErrMsg(10))
-		return
-	}
+	// token := config.WechatToken
+	// nonce, timestamp, signature := wechat.GetValidation(req)
+	// isValid := wechat.ValidateServer(token, nonce, timestamp, signature)
+	// if !isValid {
+	// 	httpResponse("json", rw, responseErrMsg(10))
+	// 	return
+	// }
 	data, _ := ioutil.ReadAll(req.Body)
 	v := wechat.Parse(data)
 	var (
