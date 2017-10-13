@@ -55,7 +55,7 @@ func WechatReceiveMessage(rw http.ResponseWriter, req *http.Request) {
 		command := strings.Split(v.Content, " ")
 		switch command[0] {
 		case "?":
-			content = "#signup" + "\n" + "Type #Signin TOKENIN SIGNATURE" + "\n" + "Find documentation https://docs.sico.io"
+			content = "#signup" + "\n\n" + "#Signin TOKENIN SIGNATURE" + "\n\n" + "Find documentation https://docs.sico.io"
 		case "#signup":
 			in := &pb.AAAGenerateTokenCall{Email: v.FromUserName + "@wechat"}
 			cc, err := rpc.Conn(config.RpcHeHost, config.RpcHePort)
@@ -67,7 +67,7 @@ func WechatReceiveMessage(rw http.ResponseWriter, req *http.Request) {
 			if r.Code != 0 {
 				content = errorMessage(r.Code)
 			} else {
-				content = "You openid is " + v.FromUserName + "\n" + "SecretID: " + r.Id + "\n" + "SecretKey: " + r.Key + "\n" + "Save this Info and delete this message for safe"
+				content = "openid:\n" + v.FromUserName + "\n\n" + "SecretID:\n" + r.Id + "\n\n" + "SecretKey:\n" + r.Key + "\n\n" + "Save this Info and delete this message for safe"
 			}
 		default:
 			content = "Command error. Type ? for help"
