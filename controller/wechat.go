@@ -50,6 +50,24 @@ func WechatReceiveMessage(rw http.ResponseWriter, req *http.Request) {
 		msgtype = "text"
 		content = "Welcome to use SiCo \nType ? for help"
 	}
+	if v.MsgType == "voice" {
+		msgtype = "text"
+		command := v.Recognition
+		if strings.Contains(command, "注册") {
+			in := &pb.AAAGenerateTokenCall{Email: v.FromUserName + "@wechat"}
+			cc, err := rpc.Conn(config.RpcHeHost, config.RpcHePort)
+			if err != nil {
+				content = errorMessage(301)
+			} else {
+				r := rpc.AAATokenGenerateRPC(cc, in)
+				if r.Code != 0 {
+					content = errorMessage(r.Code)
+				} else {
+					content = "openid:\n" + v.FromUserName + "\n\n" + "SecretID:\n" + r.Id + "\n\n" + "SecretKey:\n" + r.Key + "\n\n" + "Save this Info and delete this message for safe"
+				}
+			}
+		}
+	}
 	if v.MsgType == "text" {
 		msgtype = "text"
 		command := strings.Split(v.Content, " ")
