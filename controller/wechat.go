@@ -10,11 +10,12 @@ package controller
 
 import (
 	"io/ioutil"
-	"log"
 	"net/http"
 	"strings"
 
+	"github.com/SiCo-Ops/Pb"
 	"github.com/SiCo-Ops/cloud-go-sdk/wechat"
+	"github.com/SiCo-Ops/dao/grpc"
 	"github.com/SiCo-Ops/public"
 )
 
@@ -50,13 +51,24 @@ func WechatReceiveMessage(rw http.ResponseWriter, req *http.Request) {
 		content = "Welcome to use SiCo \nType ? for help"
 	}
 	if v.MsgType == "text" {
-		// msgtype = "text"
+		msgtype = "text"
 		command := strings.Split(v.Content, " ")
-		log.Println(command)
-		log.Println(command[0])
 		switch command[0] {
 		case "?":
-			content = "Type #signup to registry \n Type #Signin TOKENIN SIGNATURE to bind an exist token"
+			content = "#signup" + "\n" + "Type #Signin TOKENIN SIGNATURE" + "\n" + "Find documentation https://docs.sico.io"
+		case "#signup":
+			in := &pb.AAAGenerateTokenCall{Email: v.FromUserName + "@wechat"}
+			cc, err := rpc.Conn(config.RpcHeHost, config.RpcHePort)
+			if err != nil {
+				content = errorMessage(301)
+				break
+			}
+			r := rpc.AAATokenGenerateRPC(cc, in)
+			if r.Code != 0 {
+				content = errorMessage(r.Code)
+			} else {
+				content = "You openid is " + v.FromUserName + "\n" + "SecretID: " + r.Id + "\n" + "SecretKey: " + r.Key + "\n" + "Save this Info and delete this message for safe"
+			}
 		default:
 			content = "Command error. Type ? for help"
 		}
