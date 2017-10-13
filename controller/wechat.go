@@ -55,7 +55,9 @@ func WechatReceiveMessage(rw http.ResponseWriter, req *http.Request) {
 		command := strings.Split(v.Content, " ")
 		switch command[0] {
 		case "?":
-			content = "#signup" + "\n\n" + "#Signin TOKENIN SIGNATURE" + "\n\n" + "Find documentation https://docs.sico.io"
+			content = "#signup" + "\n\n" + "#Signin TOKENIN SIGNATURE" + "\n\n" + "Documentation at https://docs.sico.io"
+		case "？":
+			content = "#signup" + "\n\n" + "#Signin TOKENIN SIGNATURE" + "\n\n" + "Documentation at https://docs.sico.io"
 		case "#signup":
 			in := &pb.AAAGenerateTokenCall{Email: v.FromUserName + "@wechat"}
 			cc, err := rpc.Conn(config.RpcHeHost, config.RpcHePort)
