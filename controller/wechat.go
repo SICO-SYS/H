@@ -10,6 +10,7 @@ package controller
 
 import (
 	"io/ioutil"
+	"log"
 	"net/http"
 	"strings"
 
@@ -44,6 +45,9 @@ func WechatReceiveMessage(rw http.ResponseWriter, req *http.Request) {
 		msgtype string
 		content string
 	)
+	log.Println(req.URL.RequestURI())
+	log.Println(v.MsgType)
+	log.Println(v.CreateTime)
 	if v.MsgType == "event" && v.Event == "subscribe" {
 		msgtype = "text"
 		content = "Welcome to use SiCo \n Type #signup to registry \n Type #Signin TOKENIN SIGNATURE to bind an exist token"
