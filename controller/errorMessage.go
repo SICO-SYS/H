@@ -53,6 +53,10 @@ func errorMessage(errcode int64) string {
 		errmsg = "[Mongo] AssetDB has some problem, pls follow sentry to resolve"
 	case 204:
 		errmsg = "[Mongo] ConfigDB has some problem, pls follow sentry to resolve"
+	case 205:
+		errmsg = "[Mongo] HookDB has some problem, pls follow sentry to resolve"
+	case 206:
+		errmsg = "[Mongo] OrchestrationDB has some problem, pls follow sentry to resolve"
 	// 300 - 399 gRPC error
 	case 300:
 		errmsg = "[gRPC] RPC call failed"
@@ -104,6 +108,13 @@ func errorMessage(errcode int64) string {
 		errmsg = "[Beryllium] Synchronize not support this service yet"
 	case 3001:
 		errmsg = "[Beryllium] Template"
+
+	//4000-4999 Config problem
+	//5000-5999 Hook problem
+	case 5000:
+		errmsg = "[Carbon] Hook do not support this data type"
+	case 5001:
+		errmsg = "[Carbon] Hook not belong you."
 	//General error message
 	default:
 		errmsg = "[Common] platform error"

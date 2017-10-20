@@ -25,4 +25,6 @@ func init() {
 	Asset()
 	Config()
 	Wechat()
+	Hook()
+	Orchestration()
 }
