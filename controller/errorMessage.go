@@ -16,23 +16,25 @@ func errorMessage(errcode int64) string {
 	switch errcode {
 	// 1 - 99 Gateway
 	case 1:
-		errmsg = "[Gateway] Thanks for testing hack"
+		errmsg = "[Hydrogen] Thanks for testing hack"
 	case 2:
-		errmsg = "[Gateway.ValidatePostData] Request Content-Type make sure application/json"
+		errmsg = "[Hydrogen.ValidatePostData] Request Content-Type make sure application/json"
 	case 3:
-		errmsg = "[Gateway.actionMap] ActionMap.json file not found"
+		errmsg = "[Hydrogen.actionMap] ActionMap.json file not found"
 	case 4:
-		errmsg = "[Gateway.actionMap] Not support specified cloud yet"
+		errmsg = "[Hydrogen.actionMap] Not support specified cloud yet"
 	case 5:
-		errmsg = "[Gateway.actionMap] Not support specified service yet"
+		errmsg = "[Hydrogen.actionMap] Not support specified service yet"
 	case 6:
-		errmsg = "[Gateway.actionMap] Not support specified action yet"
+		errmsg = "[Hydrogen.actionMap] Not support specified action yet"
 	case 7:
-		errmsg = "[Gateway] Public Token Service is shutdown by manually"
+		errmsg = "[Hydrogen] Public Token Service is shutdown by manually"
 	case 8:
-		errmsg = "[Gateway] Invalid public token"
+		errmsg = "[Hydrogen] Invalid public token"
 	case 9:
-		errmsg = "[Gateway.CloudServiceIsSupport] cloud.json file not found"
+		errmsg = "[Hydrogen.CloudServiceIsSupport] cloud.json file not found"
+	case 10:
+		errmsg = "[Hydrogen] Wechat server validate failed"
 	// 100 - 199 Redis error
 	case 100:
 		errmsg = "[Redis] DB problem"
@@ -51,6 +53,10 @@ func errorMessage(errcode int64) string {
 		errmsg = "[Mongo] AssetDB has some problem, pls follow sentry to resolve"
 	case 204:
 		errmsg = "[Mongo] ConfigDB has some problem, pls follow sentry to resolve"
+	case 205:
+		errmsg = "[Mongo] HookDB has some problem, pls follow sentry to resolve"
+	case 206:
+		errmsg = "[Mongo] OrchestrationDB has some problem, pls follow sentry to resolve"
 	// 300 - 399 gRPC error
 	case 300:
 		errmsg = "[gRPC] RPC call failed"
@@ -74,32 +80,41 @@ func errorMessage(errcode int64) string {
 		errmsg = "[gRPC] Ne has some problem, pls follow sentry to resolve"
 	// 1000 - 1999 AAA error
 	case 1000:
-		errmsg = "[AAA] Authentication failed"
+		errmsg = "[Hellium] Authentication failed"
 	case 1001:
-		errmsg = "[AAA] Authorization failed"
+		errmsg = "[Hellium] Authorization failed"
 	case 1002:
-		errmsg = "[AAA] Accounting failed"
+		errmsg = "[Hellium] Accounting failed"
 	case 1003:
-		errmsg = "[AAA] Missing email or phone"
+		errmsg = "[Hellium] Missing email or phone"
 	case 1004:
-		errmsg = "[AAA] Generate token retry more than 5 times, already report event automatically"
+		errmsg = "[Hellium] Generate token retry more than 5 times, already report event automatically"
+	case 1005:
+		errmsg = "[Hellium] Token not found"
 	case 1999:
-		errmsg = "[AAA] unknown error"
+		errmsg = "[Hellium] unknown error"
 	//2000 - 2999 Cloud problem
 	case 2000:
-		errmsg = "[cloud] Missing Name or Cloud or ID"
+		errmsg = "[Lithium] Missing Name or Cloud or ID"
 	case 2001:
-		errmsg = "[cloud] Request Third-party API error,pls follow sentry to resolve"
+		errmsg = "[Lithium] Request Third-party API error,pls follow sentry to resolve"
 	case 2002:
-		errmsg = "[cloud] The cloud you specified not support yet"
+		errmsg = "[Lithium] The cloud you specified not support yet"
 	case 2003:
-		errmsg = "[cloud] Cloud token not exist"
+		errmsg = "[Lithium] Cloud token not exist"
 
 	//3000-3999 Asset problem
 	case 3000:
-		errmsg = "[asset] Synchronize not support this service yet"
+		errmsg = "[Beryllium] Synchronize not support this service yet"
 	case 3001:
-		errmsg = "[asset] Template"
+		errmsg = "[Beryllium] Template"
+
+	//4000-4999 Config problem
+	//5000-5999 Hook problem
+	case 5000:
+		errmsg = "[Carbon] Hook do not support this data type"
+	case 5001:
+		errmsg = "[Carbon] Hook not belong you."
 	//General error message
 	default:
 		errmsg = "[Common] platform error"

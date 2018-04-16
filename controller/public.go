@@ -46,12 +46,9 @@ func PublicValidateToken(k string) (bool, int64) {
 	if err != nil {
 		return false, 101
 	}
-	ok, err := redis.ValueIsString(data)
+	_, err = redis.ValueIsString(data)
 	if err != nil {
 		return false, 0
-	}
-	if ok != "active" {
-		return false, 7
 	}
 	return true, 0
 }

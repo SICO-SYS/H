@@ -1,8 +1,14 @@
 language: go
 go:
 - 1.8.x
+services:
+- redis-server
+before_install:
+- wget https://s3.amazonaws.com/sico-ops/config.travis.json -O controller/config.json
 install:
-  - go get github.com/SiCo-Ops/H
+- go get -t ./...
+script: go test -test.bench=".*" -v ./...
 notifications:
   slack:
-    secure: uqXBByydXQM9yFlC29qLuw+evyNYNuc/doswhCAmB+shP7XMZAlAr4l63crcy7HUKwGATfDZ0nc6NcOSZ0Y3oA5FKDE3T2jYAnYQYpINsU8Msrqcd436UJhBLQoR5TsfGlcQPszUui3c+zWsYvKIgLw2gZLFf0dk3n5V9Br4RvJl+oYLlhH3iQbmgMnbEIlAZo1224lzyawutLJZH0PYGeYbG5H9yTH7YlXVkOHm2i5EnyP71opcWzsnqBhWx4dL7Ufi0MUDx/rh2pOL5DKyXN3ljbZDx03KYa1XmMeWHMpvT7iWejdQUgkvndJQ5W2ufmsehVi3sVJn6ajWlHiKl8b+ueRqrL4uMU0xTdDEz68ie2jxhKGMm/P6bPcPAjcMC/5QMcqfotYunXxN83c9nJ6h3etgTGUYZbt9Y0FwMNF2c5426yZ44+u1oC7B5mFWzCnfk7EgTFOiMMbtG8RDxha6/qLgqpGQlAIY+An4sUe/oIpiNThdl1t2GLxapBrTw8hZhneH/EQIvdfqK/8gy8l68fbvTXJb/7zRDvBO1+O/FbzqIeN4gp6DmPULV4zCS0asojaRDDd/15TPyjnRWgvLTOvBOV2UzvctKP3RK+fHSWSSPDevr6QZhHQOzbzZAomSk73seJsE+B6XiMCs7fY4YGlrqGRsxNjfAS2g69U=
+    secure: va1EuCFAS/T8eHp32qmN1hX0DzDG2SBnv77UNY4n+gs0Si6DWNODpbj1SioBwpcq7u0wMFJOMLo5WdloeHrmXatEFdBP78bYahiJgO27rv9xH/vSHzsiVrHYyMbuiZz+KJF95Gv5FnuVJ4HBSU7MXnthjOEjHwxdWz5cDP4YXpQXGhW0qxyeraGpO18odklUaSl9yCPY92rQVbFH7gZ+Gn+tPm5h1q+u/0BtrKE7S+hTSakIyBaI6btHSSLYhEnHmRI2PZIeKzU66yPFIcTVOd8Jokp7eMvgjDObSD3aALCkkzMTmx8Pl/ij7FgH+AkP3XoyaiEE30/tWuVBMoc03vws4EPAnO+njojrlS+hkq8H+sSXR4X5N7dYSnt2gHL0INo9xpBL1keNvmPazFBI/BFBaP73ahdAJ0pIRN9J3oaATqFfKw+p0qif7VrZienbHr+ToyVaeq5JxYIFRwZce2uswF/0UVq1z/uMmkdw9H0MMHcV9PSCScECwxQpkBjvm4H9m2DmpequcuvYWJe5XKGSa4GKEW4WZqYQyUutjQFy/W6jW8LM4vioBNYh7mhS8MXiWmg6Nyv/ZgApMZupOiSkA6lDKFPNnistl4OItYzolMfr+5k6SUU+1Gycgt4b+fUEJ40XW2PB8sXjEVHZh5UYrIuuoxuax7PW6cRrt0U=
+    

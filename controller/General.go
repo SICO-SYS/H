@@ -67,8 +67,10 @@ func httpResponse(contentType string, rw http.ResponseWriter, rsp []byte) {
 	switch contentType {
 	case "xml":
 		rw.Header().Add("Content-Type", "application/xml")
-	default:
+	case "json":
 		rw.Header().Add("Content-Type", "application/json")
+	default:
+		rw.Header().Add("Content-Type", "text/plain")
 	}
 	rw.Write(rsp)
 }
